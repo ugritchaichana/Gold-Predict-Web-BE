@@ -28,6 +28,10 @@
 - พิมพ์ pip install -r requirements.txt
 
 
+pip freeze > requirements.txt
+
+
+
 สร้าง .venv
 - เข้าเมนูค้นหาไฟล์ของ vscode (อยู่ด้านบนกลาง)
 - เข้าที่ >Python: Create Environment...
