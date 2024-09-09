@@ -56,3 +56,6 @@
 ติดตั้งแพ็กเกจทั้งหมดที่ระบุในไฟล์ `requirements.txt`:
 ```bash
 pip install -r requirements.txt
+
+
+create venv : py -m venv .venv
