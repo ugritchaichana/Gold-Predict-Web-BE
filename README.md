@@ -2,6 +2,17 @@
 
 ## การติดตั้ง
 
+install
+1. create venv : py -m venv .venv
+2. install package : pip install -r requirements.txt
+
+run
+1. .venv\Scripts\activate
+2. py Back/manage.py runserver
+3. test : http://127.0.0.1:8000/
+
+
+
 1. เปิด CMD แล้วใช้คำสั่งเพื่อเปิดใช้งาน virtual environment:
     ```bash
     .venv\Scripts\activate
@@ -58,4 +69,3 @@
 pip install -r requirements.txt
 
 
-create venv : py -m venv .venv
