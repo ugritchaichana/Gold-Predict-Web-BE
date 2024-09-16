@@ -1,12 +1,11 @@
 from django.urls import path
-from .views import gold_start, gold_stop, gold_list, index
+from .views import  index, gold_start, gold_list, delete_all_tasks, delete_task_by_id
 
 urlpatterns = [
-    path('gold_start/', gold_start, name='gold_start'),
-    # path('gold_start/', gold_start, name='gold_start'),   -> ex : Http [GET] : http://127.0.0.1:8000/gold_start?delay=180
-    #                                                                                           (กำหนดความถี่ทำงานทุกๆ 180 วิ)
-    # ยังไม่เสร็จ ใช้ใน cmd ไปก่อน
-    # path('gold_stop/', gold_stop, name='gold_stop'),      -> cmd : py manage.py delete_all_tasks
-    # path('gold_list/', gold_status, name='gold_list'),    -> cmd : py manage.py show_tasks
     path('', index, name='index'),
+    path('gold_start/', gold_start, name='gold_start'),
+    # gold_start -> ex : Http [GET] : http://127.0.0.1:8000/gold_start?delay=180 (ทำงานทุกๆ 180 วิ)
+    path('gold_list/', gold_list, name='gold_list'),
+    path('delete_task/', delete_task_by_id, name='delete_task_by_id'),
+    path('delete_all_tasks/', delete_all_tasks, name='delete_all_tasks'),
 ]
