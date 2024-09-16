@@ -69,3 +69,5 @@ run
 pip install -r requirements.txt
 
 
+python manage.py show_tasks
+python manage.py delete_all_tasks
