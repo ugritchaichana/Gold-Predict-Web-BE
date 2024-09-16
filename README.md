@@ -1,5 +1,7 @@
 # การติดตั้งและการใช้งาน
 
+py 3.12
+
 ## การติดตั้ง
 
 install
@@ -8,8 +10,9 @@ install
 
 run
 1. .venv\Scripts\activate
-2. py Back/manage.py runserver
-3. test : http://127.0.0.1:8000/
+2. ./start.sh
+3. py Back/manage.py runserver
+4. test : http://127.0.0.1:8000/
 
 
 
@@ -71,3 +74,4 @@ pip install -r requirements.txt
 
 python manage.py show_tasks
 python manage.py delete_all_tasks
+python manage.py process_tasks
