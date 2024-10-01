@@ -9,12 +9,19 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+from decouple import config
+import os
+from google.oauth2 import service_account
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# GCS Configuration
+GCS_BUCKET_NAME = config('GCS_BUCKET_NAME')
+SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, config('GCS_SERVICE_ACCOUNT_KEY'))
+GCP_PROJECT_ID = config('GCP_PROJECT_ID')
+
+GS_CREDENTIALS = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -35,11 +42,30 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'background_task',
+    # 'background_task',
     'corsheaders',
     'rest_framework',
-    'Gold',
+    # 'Gold',
+    'Gold_TH',
+    'Gold_US',
 ]
+
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'loggers': {
+#         'django.db.backends': {
+#             'level': 'DEBUG',
+#             'handlers': ['console'],
+#         },
+#     },
+# }
+
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -110,6 +136,15 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
+# GCS Configuration
+GCS_BUCKET_NAME = config('GCS_BUCKET_NAME')
+SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, config('GCS_SERVICE_ACCOUNT_KEY'))
+
+
+# Load credentials
+credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
+
 
 
 # Password validation
