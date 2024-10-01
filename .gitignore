@@ -160,4 +160,4 @@ cython_debug/
 #.idea/
 
 # GCP Key
-/path/to/your/service-account-file.json
+service-account-file.json
