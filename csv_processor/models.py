@@ -1,6 +1,6 @@
 from django.db import models
 
-class GoldPriceUS(models.Model):
+class us_xau(models.Model):
     date = models.DateField()
     price = models.DecimalField(max_digits=15, decimal_places=2, default='0')
     open = models.DecimalField(max_digits=15, decimal_places=2, default='0')

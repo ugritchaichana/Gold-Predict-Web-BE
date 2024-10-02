@@ -27,10 +27,8 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_file(SERVICE_A
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-mq$kixy-(@qp2=q81ah5nkt_#0dn%alf4e7&5f0=nya&sn8fow'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['*']
 
@@ -49,6 +47,7 @@ INSTALLED_APPS = [
     'Gold_TH',
     'Gold_US',
     'logging_app',
+    'csv_processor',
 ]
 
 # LOGGING = {
@@ -67,6 +66,8 @@ INSTALLED_APPS = [
 #     },
 # }
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -123,17 +124,13 @@ WSGI_APPLICATION = 'Backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.sqlite3',
-    #     'NAME': BASE_DIR / 'db.sqlite3',
-    # }
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'GoldPredictSystemDB',
-        'USER': 'Booth',
-        'PASSWORD': 'Toon',
-        'HOST': '35.223.225.122',
-        'PORT': '5432',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT', cast=int),
     }
 }
 
