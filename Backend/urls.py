@@ -6,4 +6,5 @@ urlpatterns = [
     path('th', include('Gold_TH.urls')),
     path('', include('Gold_US.urls')),
     path('api/test-gcp/', test_gcp_connection_view, name='test_gcp_connection'),
+    path('api/', include('logging_app.urls')),
 ]

@@ -1,11 +1,11 @@
 # Gold_US\serializers.py
 
 from rest_framework import serializers
-from .models import GoldPriceXAU_API
+from .models import GoldPriceUS
 
 class GoldPriceXAUAPISerializer(serializers.ModelSerializer):
     class Meta:
-        model = GoldPriceXAU_API
+        model = GoldPriceUS
         fields = '__all__'
 
 class CSVUploadSerializer(serializers.Serializer):
