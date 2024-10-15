@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     # 'Gold',
+    'currency',
     'Gold_TH',
     'Gold_US',
     'logging_app',
