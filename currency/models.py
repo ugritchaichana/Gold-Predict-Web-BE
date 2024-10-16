@@ -1,7 +1,7 @@
 from django.db import models
 
 class USDTHB(models.Model):
-    date = models.DateField()
+    date = models.DateField(db_index=True)
     price = models.FloatField()
     open = models.FloatField()
     high = models.FloatField()
@@ -13,7 +13,7 @@ class USDTHB(models.Model):
         db_table = 'usdthb'
 
 class CNYTHB(models.Model):
-    date = models.DateField()
+    date = models.DateField(db_index=True)
     price = models.FloatField()
     open = models.FloatField()
     high = models.FloatField()

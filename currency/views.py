@@ -12,22 +12,18 @@ class CurrencyDataUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, format=None):
-        # รับไฟล์และชื่อสกุลเงินจาก request
         file = request.FILES['file']
         currency = request.data.get('currency')
 
-        # ตรวจสอบว่า currency ถูกต้องหรือไม่
         if currency not in ['usd', 'cny']:
             return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # อ่านไฟล์ CSV
         df = pd.read_csv(file)
-        df = df.drop(columns=['ปริมาณ'])  # ปรับตามชื่อคอลัมน์ในไฟล์ของคุณ
+        df = df.drop(columns=['ปริมาณ'])
         df.columns = ['Date', 'Price', 'Open', 'High', 'Low', 'Percent']
         df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
         df['Percent'] = pd.to_numeric(df['Percent'].str.replace('%', ''), errors='coerce')
 
-        # ทำ Data Interpolation และ Cleaning
         full_dates = pd.date_range(start=df['Date'].min(), end=df['Date'].max(), freq='D')
         df = df.set_index('Date').reindex(full_dates).reset_index()
         df.rename(columns={'index': 'Date'}, inplace=True)
@@ -44,20 +40,16 @@ class CurrencyDataUploadView(APIView):
         df['Percent'] = df['Percent'].round(4)
         df['Diff'] = df['Diff'].round(4)
 
-        # กำหนดโฟลเดอร์สำหรับเก็บไฟล์ตาม currency
         output_folder = f'cleaned-files/{currency}'
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
-        # ตั้งชื่อไฟล์ตาม currency-ddmmyy_hhmm
         current_time = datetime.now().strftime("%d%m%y_%H%M")
         file_name = f"{currency.lower()}-{current_time}.csv"
         file_path = os.path.join(output_folder, file_name)
 
-        # บันทึก DataFrame ที่ทำความสะอาดแล้วลงในไฟล์ CSV
         df.to_csv(file_path, index=False)
 
-        # บันทึกข้อมูลลงในตารางที่เลือก
         objects_to_create = []
         if currency.lower() == 'usd':
             for _, row in df.iterrows():
@@ -88,6 +80,7 @@ class CurrencyDataUploadView(APIView):
             return Response({"message": f"Data uploaded and saved to cnythb successfully. File saved as {file_name}"}, status=status.HTTP_201_CREATED)
 
         return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
+
 class CurrencyDataListView(APIView):
 
     def get(self, request, format=None):

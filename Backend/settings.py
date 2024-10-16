@@ -43,12 +43,11 @@ INSTALLED_APPS = [
     # 'background_task',
     'corsheaders',
     'rest_framework',
-    # 'Gold',
     'currency',
-    'Gold_TH',
-    'Gold_US',
+    'gold',
+    # 'Gold_TH',
+    # 'Gold_US',
     'logging_app',
-    'csv_processor',
 ]
 
 # LOGGING = {
@@ -169,7 +168,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Bangkok'
 
 USE_I18N = True
 

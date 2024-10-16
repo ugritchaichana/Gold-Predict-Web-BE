@@ -75,3 +75,14 @@ pip install -r requirements.txt
 python manage.py show_tasks
 python manage.py delete_all_tasks
 python manage.py process_tasks
+
+
+
+currency
+https://th.investing.com/currencies/thb-cny-historical-data
+https://th.investing.com/currencies/usd-thb-historical-data
+
+gold
+https://th.investing.com/commodities/gold-bullion-historical-data
+https://th.investing.com/currencies/xau-cny-historical-data
+https://th.investing.com/currencies/xau-usd-historical-data
