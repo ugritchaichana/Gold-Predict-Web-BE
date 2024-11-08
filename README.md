@@ -84,5 +84,5 @@ https://th.investing.com/currencies/usd-thb-historical-data
 
 gold
 https://th.investing.com/commodities/gold-bullion-historical-data
-https://th.investing.com/currencies/xau-cny-historical-data
 https://th.investing.com/currencies/xau-usd-historical-data
+https://th.investing.com/currencies/xau-cny-historical-data

@@ -36,17 +36,13 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    # 'background_task',
     'corsheaders',
     'rest_framework',
     'currency',
     'gold',
-    # 'Gold_TH',
-    # 'Gold_US',
     'logging_app',
 ]
 

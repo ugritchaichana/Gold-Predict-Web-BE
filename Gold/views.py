@@ -9,6 +9,74 @@ from currency.models import USDTHB, CNYTHB
 from datetime import datetime
 from django.utils import timezone
 
+class GoldDataCreateView(APIView):
+    def post(self, request, format=None):
+        gold_currency = request.data.get('gold_currency')
+        date_str = request.data.get('date')
+        price = request.data.get('price')
+        open_value = request.data.get('open')
+        high = request.data.get('high')
+        low = request.data.get('low')
+        percent = request.data.get('percent')
+        diff = request.data.get('diff')
+
+        if gold_currency not in ['usd', 'thb', 'cny']:
+            return Response({"error": "Invalid gold currency type."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if gold_currency == 'usd':
+            usd_thb = USDTHB.objects.filter(date=date).first()
+            if not usd_thb:
+                return Response({"error": "USDTHB exchange rate not found for the specified date."}, status=status.HTTP_400_BAD_REQUEST)
+            price_thb = float(price) * usd_thb.price
+            Gold_USD.objects.create(
+                date=date,
+                price=price,
+                price_thb=price_thb,
+                open=open_value,
+                high=high,
+                low=low,
+                percent=percent,
+                diff=diff
+            )
+            return Response({"message": "Gold USD data created successfully."}, status=status.HTTP_201_CREATED)
+
+        elif gold_currency == 'cny':
+            cny_thb = CNYTHB.objects.filter(date=date).first()
+            if not cny_thb:
+                return Response({"error": "CNYTHB exchange rate not found for the specified date."}, status=status.HTTP_400_BAD_REQUEST)
+            price_thb = float(price) * cny_thb.price
+            Gold_CNY.objects.create(
+                date=date,
+                price=price,
+                price_thb=price_thb,
+                open=open_value,
+                high=high,
+                low=low,
+                percent=percent,
+                diff=diff
+            )
+            return Response({"message": "Gold CNY data created successfully."}, status=status.HTTP_201_CREATED)
+
+        elif gold_currency == 'thb':
+            Gold_THB.objects.create(
+                date=date,
+                price=price,
+                open=open_value,
+                high=high,
+                low=low,
+                percent=percent,
+                diff=diff
+            )
+            return Response({"message": "Gold THB data created successfully."}, status=status.HTTP_201_CREATED)
+
+        return Response({"error": "Invalid gold currency type."}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class GoldDataUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
@@ -40,23 +108,20 @@ class GoldDataUploadView(APIView):
         objects_to_create = []
         if gold_currency.lower() == 'usd':
             for _, row in df.iterrows():
-                print(f"✅ Row: {row['Date']} - Price: {row['Price']}")  # แสดงวันที่และราคาที่กำลังประมวลผล
+                print(f"✅ Row: {row['Date']} - Price: {row['Price']}")
 
-                # พยายามหาข้อมูล usd_thb ในวันที่ตรงกัน
                 usd_thb = USDTHB.objects.filter(date=row['Date']).first()
 
-                # ถ้าไม่พบข้อมูลในวันที่ตรงกันให้หาข้อมูลที่ใหม่กว่าวันที่กำลังประมวลผล
                 if not usd_thb:
                     usd_thb = USDTHB.objects.filter(date__gte=row['Date']).order_by('date').first()
 
-                # คำนวณราคา THB
-                convert_price_th = row['Price'] * usd_thb.price if usd_thb else None  # ใช้ None ถ้าไม่พบข้อมูล
+                convert_price_th = row['Price'] * usd_thb.price if usd_thb else None
 
                 if usd_thb is None:
-                    print(f"No USDTHB data for {row['Date']}")  # ไม่มีข้อมูล USDTHB
-                    continue  # ข้ามไปที่แถวถัดไป
+                    print(f"No USDTHB data for {row['Date']}")
+                    continue
 
-                print(f"Creating object: Date={row['Date']}, Price={row['Price']}, Price THB={convert_price_th}")  # แสดงค่าที่จะถูกบันทึก
+                print(f"Creating object: Date={row['Date']}, Price={row['Price']}, Price THB={convert_price_th}")
 
                 objects_to_create.append(Gold_USD(
                     date=row['Date'],
@@ -68,7 +133,7 @@ class GoldDataUploadView(APIView):
                     percent=row['Percent'],
                     diff=row['Diff']
                 ))
-            
+
             Gold_USD.objects.bulk_create(objects_to_create)
             return Response({"message": "Data uploaded and saved to gold_usd."}, status=status.HTTP_201_CREATED)
 
@@ -77,11 +142,11 @@ class GoldDataUploadView(APIView):
                 cny_thb = CNYTHB.objects.filter(date=row['Date']).first()
                 
                 if cny_thb is None:
-                    print(f"No CNYTHB data for {row['Date']}")  # ไม่มีข้อมูล CNYTHB
-                    continue  # ข้ามไปที่แถวถัดไป
-                
+                    print(f"No CNYTHB data for {row['Date']}")
+                    continue
+
                 convert_price_th = row['Price'] * cny_thb.price if cny_thb else None
-                print(f"✅ Row: {row['Date']} - Price: {row['Price']} - Price THB: {convert_price_th}")  # แสดงวันที่และราคาที่กำลังประมวลผล
+                print(f"✅ Row: {row['Date']} - Price: {row['Price']} - Price THB: {convert_price_th}")
 
                 objects_to_create.append(Gold_CNY(
                     date=row['Date'],
@@ -100,7 +165,7 @@ class GoldDataUploadView(APIView):
 
         elif gold_currency.lower() == 'thb':
             for _, row in df.iterrows():
-                print(f"✅ Row: {row['Date']} - Price: {row['Price']}")  # แสดงวันที่และราคาที่กำลังประมวลผล
+                print(f"✅ Row: {row['Date']} - Price: {row['Price']}")
 
                 objects_to_create.append(Gold_THB(
                     date=row['Date'],
@@ -144,15 +209,13 @@ class GoldDataListView(APIView):
         end_date = request.query_params.get('end_date')
         gold_currency = request.query_params.get('gold_currency', None)
 
-        # กำหนดค่า default สำหรับ start_date และ end_date
         if start_date:
             start_date = timezone.make_aware(datetime.strptime(start_date, '%Y-%m-%d'))
         if end_date:
             end_date = timezone.make_aware(datetime.strptime(end_date, '%Y-%m-%d'))
         else:
-            end_date = timezone.now()  # ใช้วันที่ปัจจุบันถ้าไม่ได้ระบุ end_date
+            end_date = timezone.now()
 
-        # กำหนด queryset ตาม gold_currency ที่เลือก
         if gold_currency == 'usd':
             data = Gold_USD.objects.filter(date__range=(start_date, end_date))
         elif gold_currency == 'thb':
@@ -160,7 +223,6 @@ class GoldDataListView(APIView):
         elif gold_currency == 'cny':
             data = Gold_CNY.objects.filter(date__range=(start_date, end_date))
         else:
-            # ถ้าไม่ได้ระบุ gold_currency จะแสดงข้อมูลทั้งหมดจากทุก table
             data_usd = Gold_USD.objects.filter(date__range=(start_date, end_date))
             data_thb = Gold_THB.objects.filter(date__range=(start_date, end_date))
             data_cny = Gold_CNY.objects.filter(date__range=(start_date, end_date))
@@ -171,7 +233,6 @@ class GoldDataListView(APIView):
             }
             return Response(data, status=status.HTTP_200_OK)
 
-        # ส่งข้อมูลในรูปแบบ JSON
         return Response(list(data.values()), status=status.HTTP_200_OK)
     
 class GoldDataDeleteByIdView(APIView):

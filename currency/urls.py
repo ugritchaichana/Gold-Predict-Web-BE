@@ -1,5 +1,10 @@
 from django.urls import path
-from .views import (CurrencyDataUploadView,CurrencyDataListView,CurrencyDataDeleteView,CurrencyDataDeleteByIdView)
+from .views import (
+    CurrencyDataUploadView,
+    CurrencyDataListView,
+    CurrencyDataDeleteView,
+    CurrencyDataDeleteByIdView
+)
 
 urlpatterns = [
     path('upload/', CurrencyDataUploadView.as_view(), name='currency-upload'),
