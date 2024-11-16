@@ -8,6 +8,60 @@ from .models import USDTHB, CNYTHB
 from .serializers import USDTHBSerializer, CNYTHBSerializer
 from datetime import datetime
 
+class CurrencyDataCreateView(APIView):
+    def post(self, request, format=None):
+        # รับข้อมูลจาก request
+        data = request.data
+        currency = data.get('currency')
+        date = data.get('date')
+        price = data.get('price')
+        open_price = data.get('open')
+        high = data.get('high')
+        low = data.get('low')
+        percent = data.get('percent')
+        diff = data.get('diff')
+
+        # ตรวจสอบข้อมูล currency
+        if currency not in ['usd', 'cny']:
+            return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ตรวจสอบว่าข้อมูลวันที่มีอยู่หรือไม่
+        try:
+            date = datetime.strptime(date, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ตรวจสอบประเภทของ currency และบันทึกลงใน database
+        if currency.lower() == 'usd':
+            # เพิ่มข้อมูลในตาราง USDTHB
+            usd_record = USDTHB(
+                date=date,
+                price=price,
+                open=open_price,
+                high=high,
+                low=low,
+                percent=percent,
+                diff=diff
+            )
+            usd_record.save()
+            return Response({"message": "Data added to USDTHB successfully."}, status=status.HTTP_201_CREATED)
+
+        elif currency.lower() == 'cny':
+            # เพิ่มข้อมูลในตาราง CNYTHB
+            cny_record = CNYTHB(
+                date=date,
+                price=price,
+                open=open_price,
+                high=high,
+                low=low,
+                percent=percent,
+                diff=diff
+            )
+            cny_record.save()
+            return Response({"message": "Data added to CNYTHB successfully."}, status=status.HTTP_201_CREATED)
+
+        return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
+
 class CurrencyDataUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
@@ -109,7 +163,6 @@ class CurrencyDataListView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response({"error": "Currency not specified."}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class CurrencyDataDeleteView(APIView):
 

@@ -3,10 +3,12 @@ from .views import (
     CurrencyDataUploadView,
     CurrencyDataListView,
     CurrencyDataDeleteView,
-    CurrencyDataDeleteByIdView
+    CurrencyDataDeleteByIdView,
+    CurrencyDataCreateView
 )
 
 urlpatterns = [
+    path('create/', CurrencyDataCreateView.as_view(), name='currency-create'),
     path('upload/', CurrencyDataUploadView.as_view(), name='currency-upload'),
     path('list/', CurrencyDataListView.as_view(), name='currency-list'),
     path('delete/', CurrencyDataDeleteView.as_view(), name='currency-delete'),
