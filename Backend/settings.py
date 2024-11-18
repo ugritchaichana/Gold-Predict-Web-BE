@@ -36,18 +36,14 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    # 'background_task',
     'corsheaders',
     'rest_framework',
-    # 'Gold',
-    'Gold_TH',
-    'Gold_US',
+    'currency',
+    'gold',
     'logging_app',
-    'csv_processor',
 ]
 
 # LOGGING = {
@@ -168,7 +164,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Bangkok'
 
 USE_I18N = True
 
