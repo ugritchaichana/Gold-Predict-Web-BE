@@ -1,12 +1,35 @@
-# docker-compose.yml
-
-version: '3.3'
+version: '3.8'
 
 services:
-  web:
-    build: .
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
+  app:
+    build:
+      context: .
     ports:
       - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DEBUG: "${DEBUG:-False}"
+      GCS_SERVICE_ACCOUNT_KEY: "${GCS_SERVICE_ACCOUNT_KEY}"
+      GCS_BUCKET_NAME: "${GCS_BUCKET_NAME}"
+      GCP_PROJECT_ID: "${GCP_PROJECT_ID}"
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT}"
+    volumes:
+      - ./monterrey-433913-r6-d3018617e6d7.json:/app/${GCS_SERVICE_ACCOUNT_KEY}
+
+
+# services:
+#   app:
+#     build:
+#       context: .
+#     ports:
+#       - "8000:8000"
+#     env_file:
+#       - .env
+#     environment:
+#       # หากต้องการ override บางค่าใน .env สามารถเพิ่มที่นี่
+#       DEBUG: "${DEBUG:-False}"
