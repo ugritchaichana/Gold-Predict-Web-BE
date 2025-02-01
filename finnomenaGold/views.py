@@ -1,55 +1,52 @@
 import requests
 from django.http import JsonResponse
-from django.apps import apps  # ใช้สำหรับดึงโมเดลตามชื่อ
+from django.apps import apps
 from django.db import transaction
+from datetime import datetime
 
 def fetch_gold_data(request):
-    # รับพารามิเตอร์ contry_table
-    contry_table_name = request.GET.get('contry_table')  # บังคับให้ต้องระบุ
+    contry_table_name = request.GET.get('contry_table')
     if not contry_table_name:
         return JsonResponse({"error": "Missing 'contry_table' parameter."}, status=400)
 
-    # รับพารามิเตอร์เพิ่มเติม
-    period = request.GET.get('period', 'MAX')  # Default period: MAX
-    sampling = request.GET.get('sampling', '0')  # Default sampling: 0
-    start_timeframe = request.GET.get('startTimeframe', '')  # Default startTimeframe: None
+    period = request.GET.get('period', 'MAX')
+    sampling = request.GET.get('sampling', '0')
+    start_timeframe = request.GET.get('startTimeframe', '')
 
     try:
-        # ดึง model class จาก string
         contry_table = apps.get_model('finnomenaGold', contry_table_name)
 
-        # สร้าง URL API พร้อมพารามิเตอร์
         url = (
             f"https://www.finnomena.com/fn3/api/gold/trader/history/graph?"
             f"period={period}&sampling={sampling}&startTimeframe={start_timeframe}"
         )
 
-        # Request ข้อมูลจาก API
         response = requests.get(url)
         if response.status_code == 200:
             data = response.json().get("data", [])
             bulk_data = []
 
-            # ดึงค่าที่มีอยู่ในฐานข้อมูลเพื่อลดการ query ซ้ำซ้อน
             existing_timestamps = set(contry_table.objects.values_list("timestamp", flat=True))
 
             for item in data:
                 if item["timestamp"] not in existing_timestamps:
-                    bulk_data.append(
-                        contry_table(
-                            timestamp=item["timestamp"],
-                            created_at=item["createdAt"],
-                            created_time=item["createdTime"],
-                            bar_buy_price=item["barBuyPrice"],
-                            bar_sell_price=item["barSellPrice"],
-                            bar_price_change=item["barPriceChange"],
-                            ornament_buy_price=item["ornamentBuyPrice"],
-                            ornament_sell_price=item["ornamentSellPrice"],
-                            created_date_time=item["createdDateTime"],
+                    if contry_table_name == 'Gold_TH':
+                        created_at = datetime.strptime(item["createdAt"], '%Y-%m-%dT%H:%M:%SZ')
+                        
+                        bulk_data.append(
+                            contry_table(
+                                timestamp=item["timestamp"],
+                                created_at=created_at,
+                                created_time=item["createdTime"],
+                                price=item["barBuyPrice"],
+                                bar_sell_price=item["barSellPrice"],
+                                bar_price_change=item["barPriceChange"],
+                                ornament_buy_price=item["ornamentBuyPrice"],
+                                ornament_sell_price=item["ornamentSellPrice"],
+                                date=created_at.strftime('%d-%m-%y'),
+                            )
                         )
-                    )
 
-            # ใช้ bulk_create เพื่อบันทึกข้อมูลทีละ batch
             if bulk_data:
                 with transaction.atomic():
                     contry_table.objects.bulk_create(bulk_data, batch_size=5000)
@@ -64,8 +61,7 @@ def fetch_gold_data(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 def delete_all_gold_data(request):
-    # รับพารามิเตอร์ contry_table
-    contry_table_name = request.GET.get('contry_table')  # บังคับให้ต้องระบุ
+    contry_table_name = request.GET.get('contry_table')
     if not contry_table_name:
         return JsonResponse({"error": "Missing 'contry_table' parameter."}, status=400)
 
@@ -79,28 +75,46 @@ def delete_all_gold_data(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 def get_gold_data(request):
-    # รับพารามิเตอร์ contry_table
-    contry_table_name = request.GET.get('contry_table')  # บังคับให้ต้องระบุ
+    contry_table_name = request.GET.get('contry_table')
     if not contry_table_name:
         return JsonResponse({"error": "Missing 'contry_table' parameter."}, status=400)
 
+    db_choice = request.GET.get('db_choice', None)
+    if db_choice is None:
+        return JsonResponse({"error": "Missing 'db_choice' parameter."}, status=400)
+
+    table_mapping = {
+        '0': 'Gold_TH',
+        '1': 'Gold_US',
+        '2': 'currency'
+    }
+    
+    contry_table_name = table_mapping.get(db_choice)
+    if not contry_table_name:
+        return JsonResponse({"error": "Invalid 'db_choice' parameter value. Must be 0, 1, or 2."}, status=400)
+
     # รับพารามิเตอร์ช่วงเวลา
-    start_timeframe = request.GET.get('startTimeframe', None)  # เริ่มต้น
-    end_timeframe = request.GET.get('endTimeframe', None)  # สิ้นสุด
+    start_timeframe = request.GET.get('startTimeframe', None)
+    end_timeframe = request.GET.get('endTimeframe', None)
 
     try:
         contry_table = apps.get_model('finnomenaGold', contry_table_name)
 
-        # กรองข้อมูลตามช่วงเวลาที่ระบุ
+        if start_timeframe:
+            start_timeframe = datetime.strptime(start_timeframe, '%d-%m-%Y').strftime('%Y-%m-%d')
+        if end_timeframe:
+            end_timeframe = datetime.strptime(end_timeframe, '%d-%m-%Y').strftime('%Y-%m-%d')
+
         queryset = contry_table.objects.all()
         if start_timeframe:
-            queryset = queryset.filter(created_date_time__gte=start_timeframe)
+            queryset = queryset.filter(created_at__gte=start_timeframe)
         if end_timeframe:
-            queryset = queryset.filter(created_date_time__lte=end_timeframe)
+            queryset = queryset.filter(created_at__lte=end_timeframe)
 
-        # แปลงข้อมูลเป็น JSON
-        data = list(queryset.values())
+        data = list(queryset.values('date', 'price'))
+
         return JsonResponse({"data": data, "count": len(data)})
+
     except LookupError:
         return JsonResponse({"error": f"Model '{contry_table_name}' does not exist in app 'finnomenaGold'."}, status=400)
     except Exception as e:
