@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "35.198.194.90",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "GoldPredictDB",
+            "database": "postgres",
+            "username": "postgres",
+            "password": "password"
+        }
+    ]
+}
