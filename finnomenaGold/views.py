@@ -71,7 +71,8 @@ def fetch_gold_th_data(request):
         return JsonResponse({"error": "Failed to fetch data from Finnomena Gold TH API.", "status_code": response.status_code}, status=500)
 
 def fetch_gold_us_data(request):
-    url = "https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2009-01-25/2025-01-25"
+    currentDateTime = datetime.now().strftime('%Y-%m-%d')
+    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2025-01-01/{currentDateTime}"
     contry_table = apps.get_model('finnomenaGold', 'Gold_US')
 
     response = requests.get(url)
