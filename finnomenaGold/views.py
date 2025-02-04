@@ -169,9 +169,7 @@ def get_gold_data(request):
         
         print('queryset : ', queryset)
 
-        data = list(queryset.values('created_at', 'price'))
-        for item in data:
-            item['created_at'] = item['created_at'].strftime('%d-%m-%y')
+        data = list(queryset.values())
 
         return JsonResponse({"data": data, "count": len(data)})
 
