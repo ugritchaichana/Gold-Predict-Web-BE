@@ -72,7 +72,7 @@ def fetch_gold_th_data(request):
 
 def fetch_gold_us_data(request):
     currentDateTime = datetime.now().strftime('%Y-%m-%d')
-    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2025-01-01/{currentDateTime}"
+    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2005-01-01/{currentDateTime}"
     contry_table = apps.get_model('finnomenaGold', 'Gold_US')
 
     response = requests.get(url)
