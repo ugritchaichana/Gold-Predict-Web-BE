@@ -7,6 +7,9 @@ from rest_framework import status
 from .models import USDTHB, CNYTHB
 from .serializers import USDTHBSerializer, CNYTHBSerializer
 from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
+import json
+from django.http import JsonResponse
 
 class CurrencyDataCreateView(APIView):
     def post(self, request, format=None):
@@ -219,3 +222,38 @@ class CurrencyDataDeleteByIdView(APIView):
                 return Response({"error": "Record not found."}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({"error": "Currency not specified."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+def add_usdthb_data(request):
+    if request.method == 'POST':
+        try:
+            # รับข้อมูล JSON จาก request
+            data = json.loads(request.body)
+
+            # ตรวจสอบว่า keys ของข้อมูลครบถ้วนหรือไม่
+            date = data.get('date')
+            price = data.get('price', None)
+            open_value = data.get('open', None)
+            high = data.get('high', None)
+            low = data.get('low', None)
+            percent = data.get('percent', None)
+            diff = data.get('diff', None)
+
+            # สร้าง record ใหม่
+            usdthb_record = USDTHB.objects.create(
+                date=date,
+                price=price,
+                open=open_value,
+                high=high,
+                low=low,
+                percent=percent,
+                diff=diff
+            )
+
+            return JsonResponse({"message": "Data added successfully", "data": data}, status=201)
+        
+        except Exception as e:
+            return JsonResponse({"message": str(e)}, status=400)
+
+    return JsonResponse({"message": "Only POST method is allowed"}, status=405)

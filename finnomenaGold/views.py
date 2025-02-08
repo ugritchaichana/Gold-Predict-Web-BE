@@ -5,6 +5,8 @@ from django.apps import apps
 from datetime import datetime, timezone, timedelta
 from django.db import transaction
 
+currentDateTime = datetime.now().strftime('%Y-%m-%d')
+
 def fetch_gold_data(request):
     db_choice = request.GET.get('db_choice')
     if not db_choice:
@@ -24,6 +26,8 @@ def fetch_gold_data(request):
         return fetch_gold_th_data(request)
     elif db_choice == '1':
         return fetch_gold_us_data(request)
+    # elif db_choice == '2':
+    #     return fetch_currency(request)
     else:
         return JsonResponse({"error": "Invalid 'db_choice' parameter value."}, status=400)
 
@@ -71,7 +75,6 @@ def fetch_gold_th_data(request):
         return JsonResponse({"error": "Failed to fetch data from Finnomena Gold TH API.", "status_code": response.status_code}, status=500)
 
 def fetch_gold_us_data(request):
-    currentDateTime = datetime.now().strftime('%Y-%m-%d')
     url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2005-01-01/{currentDateTime}"
     contry_table = apps.get_model('finnomenaGold', 'Gold_US')
 

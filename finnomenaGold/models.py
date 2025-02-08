@@ -2,6 +2,11 @@ from django.db import models
 from datetime import datetime
 import time
 
+class Currency(models.Model):
+    timestamp = models.BigIntegerField(unique=True,null=True)
+    date = models.CharField(max_length=16,null=True)
+    price = models.FloatField(null=True)
+
 class Gold_US(models.Model):
     timestamp = models.BigIntegerField(unique=True,null=True)
     price = models.FloatField(null=True)
