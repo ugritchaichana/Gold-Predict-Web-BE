@@ -154,9 +154,9 @@ class CurrencyDataListView(APIView):
                 return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
 
             if start_date and end_date:
-                data = model.objects.filter(date__range=[start_date, end_date])
+                data = model.objects.filter(date__range=[start_date, end_date]).order_by('date')
             else:
-                data = model.objects.all()
+                data = model.objects.all().order_by('date')
 
             if currency.lower() == 'usd':
                 serializer = USDTHBSerializer(data, many=True)
