@@ -227,12 +227,10 @@ class CurrencyDataDeleteByIdView(APIView):
 from django.db.models import Q
 from datetime import datetime, timedelta
 def get_currency_data(request):
-    # Get frame and date range parameters
-    frame = request.GET.get('frame', None)  # 1d, 7d, 15d, 1m, 3m, 1y, 3y, all
+    frame = request.GET.get('frame', None)
     start_date = request.GET.get('start', None)
     end_date = request.GET.get('end', None)
 
-    # Validate and parse start and end date
     try:
         if start_date:
             start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
@@ -243,12 +241,10 @@ def get_currency_data(request):
     except ValueError:
         return JsonResponse({"error": "Invalid date format. Use 'YYYY-MM-DD'."}, status=400)
 
-    # Prepare date filter based on frame
     end_timeframe = datetime.now().date()
     if not start_date:
         start_date = end_timeframe
 
-    # Handle frame logic
     if frame:
         if frame == "1d":
             start_date = end_timeframe
@@ -257,7 +253,7 @@ def get_currency_data(request):
         elif frame == "15d":
             start_date = end_timeframe - timedelta(days=14)
         elif frame == "1m":
-            start_date = end_timeframe.replace(day=1)  # The first day of the current month
+            start_date = end_timeframe.replace(day=1)
         elif frame == "3m":
             start_date = end_timeframe - timedelta(days=90)
         elif frame == "1y":
@@ -269,7 +265,6 @@ def get_currency_data(request):
         else:
             return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
 
-    # Query USDTHB data based on start and end date
     queryset = USDTHB.objects.all()
 
     if start_date:
@@ -277,16 +272,13 @@ def get_currency_data(request):
     if end_date:
         queryset = queryset.filter(date__lte=end_date)
 
-    # Handle the case for '1d' frame where no data exists and fallback to latest date
     if frame == "1d" and not queryset.exists():
         latest_entry = USDTHB.objects.order_by('-date').first()
         if latest_entry:
             queryset = USDTHB.objects.filter(date=latest_entry.date)
 
-    # Order the data by id in ascending order
     queryset = queryset.order_by('id')
 
-    # Prepare the response data
     data = list(queryset.values())
 
     return JsonResponse({"data": data, "count": len(data)})

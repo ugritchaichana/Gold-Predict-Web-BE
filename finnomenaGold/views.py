@@ -142,20 +142,28 @@ def get_gold_data(request):
     if db_choice is None:
         return JsonResponse({"error": "Missing 'db_choice' parameter."}, status=400)
 
-    table_mapping = {'0': 'Gold_TH', '1': 'Gold_US', '2': 'currency'}
+    table_mapping = {'0': 'Gold_TH', '1': 'Gold_US'}
     table_name = table_mapping.get(db_choice)
     if not table_name:
-        return JsonResponse({"error": "Invalid 'db_choice' parameter value. Must be 0, 1, or 2."}, status=400)
+        return JsonResponse({"error": "Invalid 'db_choice' parameter value. Must be 0 or 1."}, status=400)
 
-    start_timeframe = None
     end_timeframe = datetime.now(timezone.utc).date()
-    frame = request.GET.get('frame', None)  # เปลี่ยนชื่อเป็น 'frame'
+    start_timeframe = None
+
+    frame = request.GET.get('frame', None)
+    start_param = request.GET.get('start', None)
+    end_param = request.GET.get('end', None)
 
     try:
-        table_model = apps.get_model('finnomenaGold', table_name)
-        queryset = table_model.objects.all()
+        if start_param:
+            start_timeframe = datetime.strptime(start_param, "%d-%m-%Y").date()
+        if end_param:
+            end_timeframe = datetime.strptime(end_param, "%d-%m-%Y").date()
 
-        if frame:
+        if start_timeframe and end_timeframe and start_timeframe > end_timeframe:
+            return JsonResponse({"error": "'start' date cannot be after 'end' date."}, status=400)
+
+        if not start_timeframe and frame:
             if frame == "1d":
                 start_timeframe = end_timeframe
             elif frame == "7d":
@@ -177,6 +185,9 @@ def get_gold_data(request):
             else:
                 return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
 
+        table_model = apps.get_model('finnomenaGold', table_name)
+        queryset = table_model.objects.all()
+
         if start_timeframe:
             queryset = queryset.filter(created_at__date__gte=start_timeframe)
         queryset = queryset.filter(created_at__date__lte=end_timeframe)
@@ -187,11 +198,12 @@ def get_gold_data(request):
                 queryset = table_model.objects.filter(created_at__date=latest_entry.created_at.date())
 
         queryset = queryset.order_by('id')
-
         data = list(queryset.values())
 
         return JsonResponse({"data": data, "count": len(data)})
 
+    except ValueError:
+        return JsonResponse({"error": "Invalid date format. Use 'dd-mm-yyyy'."}, status=400)
     except LookupError:
         return JsonResponse({"error": f"Model '{table_name}' does not exist in app 'finnomenaGold'."}, status=400)
     except Exception as e:
