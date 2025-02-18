@@ -142,37 +142,51 @@ def get_gold_data(request):
     if db_choice is None:
         return JsonResponse({"error": "Missing 'db_choice' parameter."}, status=400)
 
-    table_mapping = {
-        '0': 'Gold_TH',
-        '1': 'Gold_US',
-        '2': 'currency'
-    }
-    
+    table_mapping = {'0': 'Gold_TH', '1': 'Gold_US', '2': 'currency'}
     table_name = table_mapping.get(db_choice)
     if not table_name:
         return JsonResponse({"error": "Invalid 'db_choice' parameter value. Must be 0, 1, or 2."}, status=400)
 
-    start_timeframe = request.GET.get('startTimeframe', None)
-    end_timeframe = request.GET.get('endTimeframe', None)
+    start_timeframe = None
+    end_timeframe = datetime.now(timezone.utc).date()
+    frame = request.GET.get('frame', None)  # เปลี่ยนชื่อเป็น 'frame'
 
     try:
         table_model = apps.get_model('finnomenaGold', table_name)
-
-        if start_timeframe:
-            start_timeframe = datetime.strptime(start_timeframe, '%d-%m-%Y')
-        if end_timeframe:
-            end_timeframe = datetime.strptime(end_timeframe, '%d-%m-%Y')
-
         queryset = table_model.objects.all()
 
+        if frame:
+            if frame == "1d":
+                start_timeframe = end_timeframe
+            elif frame == "7d":
+                start_timeframe = end_timeframe - timedelta(days=6)
+            elif frame == "15d":
+                start_timeframe = end_timeframe - timedelta(days=14)
+            elif frame == "1m":
+                start_timeframe = (end_timeframe.replace(day=1) - timedelta(days=1)).replace(day=end_timeframe.day)
+            elif frame == "3m":
+                start_timeframe = (end_timeframe - timedelta(days=90)).replace(day=end_timeframe.day)
+            elif frame == "6m":
+                start_timeframe = (end_timeframe - timedelta(days=180)).replace(day=end_timeframe.day)
+            elif frame == "1y":
+                start_timeframe = end_timeframe.replace(year=end_timeframe.year - 1)
+            elif frame == "3y":
+                start_timeframe = end_timeframe.replace(year=end_timeframe.year - 3)
+            elif frame == "all":
+                start_timeframe = None
+            else:
+                return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
+
         if start_timeframe:
-            queryset = queryset.filter(created_at__gte=start_timeframe)
-            print('start_timeframe : ', start_timeframe)
-        if end_timeframe:
-            queryset = queryset.filter(created_at__lte=end_timeframe)
-            print('end_timeframe : ', end_timeframe)
-        
-        print('queryset : ', queryset)
+            queryset = queryset.filter(created_at__date__gte=start_timeframe)
+        queryset = queryset.filter(created_at__date__lte=end_timeframe)
+
+        if frame == "1d" and not queryset.exists():
+            latest_entry = table_model.objects.order_by('-created_at').first()
+            if latest_entry:
+                queryset = table_model.objects.filter(created_at__date=latest_entry.created_at.date())
+
+        queryset = queryset.order_by('id')
 
         data = list(queryset.values())
 
