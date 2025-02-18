@@ -138,34 +138,34 @@ class CurrencyDataUploadView(APIView):
 
         return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
 
-class CurrencyDataListView(APIView):
+# class CurrencyDataListView(APIView):
 
-    def get(self, request, format=None):
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
-        currency = request.query_params.get('currency')
+#     def get(self, request, format=None):
+#         start_date = request.query_params.get('start_date')
+#         end_date = request.query_params.get('end_date')
+#         currency = request.query_params.get('currency')
 
-        if currency:
-            if currency.lower() == 'usd':
-                model = USDTHB
-            elif currency.lower() == 'cny':
-                model = CNYTHB
-            else:
-                return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
+#         if currency:
+#             if currency.lower() == 'usd':
+#                 model = USDTHB
+#             elif currency.lower() == 'cny':
+#                 model = CNYTHB
+#             else:
+#                 return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
 
-            if start_date and end_date:
-                data = model.objects.filter(date__range=[start_date, end_date]).order_by('date')
-            else:
-                data = model.objects.all().order_by('date')
+#             if start_date and end_date:
+#                 data = model.objects.filter(date__range=[start_date, end_date]).order_by('date')
+#             else:
+#                 data = model.objects.all().order_by('date')
 
-            if currency.lower() == 'usd':
-                serializer = USDTHBSerializer(data, many=True)
-            else:
-                serializer = CNYTHBSerializer(data, many=True)
+#             if currency.lower() == 'usd':
+#                 serializer = USDTHBSerializer(data, many=True)
+#             else:
+#                 serializer = CNYTHBSerializer(data, many=True)
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+#             return Response(serializer.data, status=status.HTTP_200_OK)
 
-        return Response({"error": "Currency not specified."}, status=status.HTTP_400_BAD_REQUEST)
+#         return Response({"error": "Currency not specified."}, status=status.HTTP_400_BAD_REQUEST)
 
 class CurrencyDataDeleteView(APIView):
 
@@ -223,6 +223,73 @@ class CurrencyDataDeleteByIdView(APIView):
 
         return Response({"error": "Currency not specified."}, status=status.HTTP_400_BAD_REQUEST)
 
+
+from django.db.models import Q
+from datetime import datetime, timedelta
+def get_currency_data(request):
+    # Get frame and date range parameters
+    frame = request.GET.get('frame', None)  # 1d, 7d, 15d, 1m, 3m, 1y, 3y, all
+    start_date = request.GET.get('start', None)
+    end_date = request.GET.get('end', None)
+
+    # Validate and parse start and end date
+    try:
+        if start_date:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        if end_date:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        if start_date and end_date and start_date > end_date:
+            return JsonResponse({"error": "'start' date cannot be after 'end' date."}, status=400)
+    except ValueError:
+        return JsonResponse({"error": "Invalid date format. Use 'YYYY-MM-DD'."}, status=400)
+
+    # Prepare date filter based on frame
+    end_timeframe = datetime.now().date()
+    if not start_date:
+        start_date = end_timeframe
+
+    # Handle frame logic
+    if frame:
+        if frame == "1d":
+            start_date = end_timeframe
+        elif frame == "7d":
+            start_date = end_timeframe - timedelta(days=6)
+        elif frame == "15d":
+            start_date = end_timeframe - timedelta(days=14)
+        elif frame == "1m":
+            start_date = end_timeframe.replace(day=1)  # The first day of the current month
+        elif frame == "3m":
+            start_date = end_timeframe - timedelta(days=90)
+        elif frame == "1y":
+            start_date = end_timeframe.replace(year=end_timeframe.year - 1)
+        elif frame == "3y":
+            start_date = end_timeframe.replace(year=end_timeframe.year - 3)
+        elif frame == "all":
+            start_date = None
+        else:
+            return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
+
+    # Query USDTHB data based on start and end date
+    queryset = USDTHB.objects.all()
+
+    if start_date:
+        queryset = queryset.filter(date__gte=start_date)
+    if end_date:
+        queryset = queryset.filter(date__lte=end_date)
+
+    # Handle the case for '1d' frame where no data exists and fallback to latest date
+    if frame == "1d" and not queryset.exists():
+        latest_entry = USDTHB.objects.order_by('-date').first()
+        if latest_entry:
+            queryset = USDTHB.objects.filter(date=latest_entry.date)
+
+    # Order the data by id in ascending order
+    queryset = queryset.order_by('id')
+
+    # Prepare the response data
+    data = list(queryset.values())
+
+    return JsonResponse({"data": data, "count": len(data)})
 
 @csrf_exempt
 def add_usdthb_data(request):
