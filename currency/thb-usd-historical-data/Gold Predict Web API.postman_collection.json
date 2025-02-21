@@ -1,0 +1,1640 @@
+{
+	"info": {
+		"_postman_id": "4d18d40d-e31e-47e9-8cf0-583bba600542",
+		"name": "Gold Predict Web API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "35048809"
+	},
+	"item": [
+		{
+			"name": "finnomenaGold",
+			"item": [
+				{
+					"name": "get-gold-data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}finnomenaGold/get-gold-data/?db_choice=1&start=01-01-2010&end=01-01-2025&group_by=monthly",
+							"host": [
+								"{{URL}}finnomenaGold"
+							],
+							"path": [
+								"get-gold-data",
+								""
+							],
+							"query": [
+								{
+									"key": "db_choice",
+									"value": "0",
+									"description": "th",
+									"disabled": true
+								},
+								{
+									"key": "db_choice",
+									"value": "1",
+									"description": "us"
+								},
+								{
+									"key": "start",
+									"value": "01-01-2010"
+								},
+								{
+									"key": "end",
+									"value": "01-01-2025"
+								},
+								{
+									"key": "group_by",
+									"value": "monthly",
+									"description": "default = daily"
+								},
+								{
+									"key": "frame",
+									"value": "1d",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "7d",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "15d",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "1m",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "3m",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "1y",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "3y",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "all",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "th 1d daily",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}finnomenaGold/get-gold-data/?db_choice=0&frame=1d",
+									"host": [
+										"{{URL}}finnomenaGold"
+									],
+									"path": [
+										"get-gold-data",
+										""
+									],
+									"query": [
+										{
+											"key": "db_choice",
+											"value": "0",
+											"description": "th"
+										},
+										{
+											"key": "db_choice",
+											"value": "1",
+											"description": "us",
+											"disabled": true
+										},
+										{
+											"key": "start",
+											"value": "01-01-2010",
+											"disabled": true
+										},
+										{
+											"key": "end",
+											"value": "01-01-2025",
+											"disabled": true
+										},
+										{
+											"key": "group_by",
+											"value": "monthly",
+											"description": "default = daily",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "1d"
+										},
+										{
+											"key": "frame",
+											"value": "7d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "15d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "1m",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "3m",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "1y",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "3y",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "all",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 20 Feb 2025 19:05:31 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.11.9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Vary",
+									"value": "origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "290"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Cross-Origin-Opener-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"data\": [\n        {\n            \"id\": 96283,\n            \"created_at\": \"2025-02-20T08:43:00Z\",\n            \"created_time\": \"6\",\n            \"price\": 46900,\n            \"bar_sell_price\": \"47000.00\",\n            \"bar_price_change\": \"50.00\",\n            \"ornament_buy_price\": \"46056.08\",\n            \"ornament_sell_price\": \"47500.00\",\n            \"timestamp\": 1740040980000,\n            \"date\": \"20-02-25\"\n        }\n    ],\n    \"count\": 1\n}"
+						},
+						{
+							"name": "us 1y monthly",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}finnomenaGold/get-gold-data/?db_choice=1&group_by=monthly&frame=1y",
+									"host": [
+										"{{URL}}finnomenaGold"
+									],
+									"path": [
+										"get-gold-data",
+										""
+									],
+									"query": [
+										{
+											"key": "db_choice",
+											"value": "0",
+											"description": "th",
+											"disabled": true
+										},
+										{
+											"key": "db_choice",
+											"value": "1",
+											"description": "us"
+										},
+										{
+											"key": "start",
+											"value": "01-01-2010",
+											"disabled": true
+										},
+										{
+											"key": "end",
+											"value": "01-01-2025",
+											"disabled": true
+										},
+										{
+											"key": "group_by",
+											"value": "monthly",
+											"description": "default = daily"
+										},
+										{
+											"key": "frame",
+											"value": "1d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "7d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "15d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "1m",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "3m",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "1y"
+										},
+										{
+											"key": "frame",
+											"value": "3y",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "all",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 20 Feb 2025 19:06:08 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.11.9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Vary",
+									"value": "origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1316"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Cross-Origin-Opener-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"data\": [\n        {\n            \"period\": \"2024-02\",\n            \"avg_price\": 2028.2100000000003,\n            \"min_price\": 2016.11,\n            \"max_price\": 2034.57\n        },\n        {\n            \"period\": \"2024-03\",\n            \"avg_price\": 2157.6528000000003,\n            \"min_price\": 2044.08,\n            \"max_price\": 2237.65\n        },\n        {\n            \"period\": \"2024-04\",\n            \"avg_price\": 2335.2323076923076,\n            \"min_price\": 2244.75,\n            \"max_price\": 2386.84\n        },\n        {\n            \"period\": \"2024-05\",\n            \"avg_price\": 2350.2559259259256,\n            \"min_price\": 2291.98,\n            \"max_price\": 2425.75\n        },\n        {\n            \"period\": \"2024-06\",\n            \"avg_price\": 2325.6884000000005,\n            \"min_price\": 2293.51,\n            \"max_price\": 2376.64\n        },\n        {\n            \"period\": \"2024-07\",\n            \"avg_price\": 2390.678148148148,\n            \"min_price\": 2324.86,\n            \"max_price\": 2471.24\n        },\n        {\n            \"period\": \"2024-08\",\n            \"avg_price\": 2469.3434615384617,\n            \"min_price\": 2384.37,\n            \"max_price\": 2525.36\n        },\n        {\n            \"period\": \"2024-09\",\n            \"avg_price\": 2566.6726923076926,\n            \"min_price\": 2493.04,\n            \"max_price\": 2672.43\n        },\n        {\n            \"period\": \"2024-10\",\n            \"avg_price\": 2687.15037037037,\n            \"min_price\": 2608.38,\n            \"max_price\": 2785.47\n        },\n        {\n            \"period\": \"2024-11\",\n            \"avg_price\": 2654.195833333333,\n            \"min_price\": 2562.95,\n            \"max_price\": 2746.81\n        },\n        {\n            \"period\": \"2024-12\",\n            \"avg_price\": 2638.794074074074,\n            \"min_price\": 2588.52,\n            \"max_price\": 2719.41\n        },\n        {\n            \"period\": \"2025-01\",\n            \"avg_price\": 2699.838518518519,\n            \"min_price\": 2623.52,\n            \"max_price\": 2796.26\n        },\n        {\n            \"period\": \"2025-02\",\n            \"avg_price\": 2877.6093750000005,\n            \"min_price\": 2792.84,\n            \"max_price\": 2935.7\n        }\n    ],\n    \"count\": 13\n}"
+						},
+						{
+							"name": "us custom monthly",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}finnomenaGold/get-gold-data/?db_choice=1&start=01-01-2010&end=01-01-2025&group_by=monthly",
+									"host": [
+										"{{URL}}finnomenaGold"
+									],
+									"path": [
+										"get-gold-data",
+										""
+									],
+									"query": [
+										{
+											"key": "db_choice",
+											"value": "0",
+											"description": "th",
+											"disabled": true
+										},
+										{
+											"key": "db_choice",
+											"value": "1",
+											"description": "us"
+										},
+										{
+											"key": "start",
+											"value": "01-01-2010"
+										},
+										{
+											"key": "end",
+											"value": "01-01-2025"
+										},
+										{
+											"key": "group_by",
+											"value": "monthly",
+											"description": "default = daily"
+										},
+										{
+											"key": "frame",
+											"value": "1d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "7d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "15d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "1m",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "3m",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "1y",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "3y",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "all",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 20 Feb 2025 19:06:53 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.11.9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Vary",
+									"value": "origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "14799"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Cross-Origin-Opener-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"data\": [\n        {\n            \"period\": \"2010-01\",\n            \"avg_price\": 1119.1004166666664,\n            \"min_price\": 1085.85,\n            \"max_price\": 1153.7\n        },\n        {\n            \"period\": \"2010-02\",\n            \"avg_price\": 1096.4795652173912,\n            \"min_price\": 1062.94,\n            \"max_price\": 1125.59\n        },\n        {\n            \"period\": \"2010-03\",\n            \"avg_price\": 1114.348888888889,\n            \"min_price\": 1086.6,\n            \"max_price\": 1140.4\n        },\n        {\n            \"period\": \"2010-04\",\n            \"avg_price\": 1145.3344000000004,\n            \"min_price\": 1112.5,\n            \"max_price\": 1168.79\n        },\n        {\n            \"period\": \"2010-05\",\n            \"avg_price\": 1203.4066666666668,\n            \"min_price\": 1170.84,\n            \"max_price\": 1238.09\n        },\n        {\n            \"period\": \"2010-06\",\n            \"avg_price\": 1234.8755999999998,\n            \"min_price\": 1206.45,\n            \"max_price\": 1259.59\n        },\n        {\n            \"period\": \"2010-07\",\n            \"avg_price\": 1208.56625,\n            \"min_price\": 1193.49,\n            \"max_price\": 1241.35\n        },\n        {\n            \"period\": \"2010-09\",\n            \"avg_price\": 1296.14997,\n            \"min_price\": 1296.14997,\n            \"max_price\": 1296.14997\n        },\n        {\n            \"period\": \"2011-06\",\n            \"avg_price\": 1505.59997,\n            \"min_price\": 1505.59997,\n            \"max_price\": 1505.59997\n        },\n        {\n            \"period\": \"2011-07\",\n            \"avg_price\": 1569.0841946153846,\n            \"min_price\": 1487.53997,\n            \"max_price\": 1624.59996\n        },\n        {\n            \"period\": \"2011-08\",\n            \"avg_price\": 1755.4480369230769,\n            \"min_price\": 1615.04996,\n            \"max_price\": 1908.94996\n        },\n        {\n            \"period\": \"2013-07\",\n            \"avg_price\": 1310.4912499999998,\n            \"min_price\": 1277,\n            \"max_price\": 1343.1\n        },\n        {\n            \"period\": \"2013-08\",\n            \"avg_price\": 1350.1911538461538,\n            \"min_price\": 1282.15,\n            \"max_price\": 1418.66\n        },\n        {\n            \"period\": \"2013-09\",\n            \"avg_price\": 1354.5450000000003,\n            \"min_price\": 1306.35,\n            \"max_price\": 1411.31\n        },\n        {\n            \"period\": \"2013-10\",\n            \"avg_price\": 1314.8644444444446,\n            \"min_price\": 1272.02,\n            \"max_price\": 1353.04\n        },\n        {\n            \"period\": \"2013-11\",\n            \"avg_price\": 1279.0836,\n            \"min_price\": 1238.09,\n            \"max_price\": 1323.1\n        },\n        {\n            \"period\": \"2013-12\",\n            \"avg_price\": 1225.086923076923,\n            \"min_price\": 1191.54,\n            \"max_price\": 1261\n        },\n        {\n            \"period\": \"2014-01\",\n            \"avg_price\": 1245.751923076923,\n            \"min_price\": 1223.34,\n            \"max_price\": 1275.53\n        },\n        {\n            \"period\": \"2014-02\",\n            \"avg_price\": 1296.2945833333333,\n            \"min_price\": 1243.43,\n            \"max_price\": 1341.01\n        },\n        {\n            \"period\": \"2014-03\",\n            \"avg_price\": 1337.2703846153845,\n            \"min_price\": 1292.72,\n            \"max_price\": 1386.53\n        },\n        {\n            \"period\": \"2014-04\",\n            \"avg_price\": 1299.934,\n            \"min_price\": 1281,\n            \"max_price\": 1326.39\n        },\n        {\n            \"period\": \"2014-05\",\n            \"avg_price\": 1290.4246153846154,\n            \"min_price\": 1256.81,\n            \"max_price\": 1310.86\n        },\n        {\n            \"period\": \"2014-06\",\n            \"avg_price\": 1278.8503846153844,\n            \"min_price\": 1244.15,\n            \"max_price\": 1318.44\n        },\n        {\n            \"period\": \"2014-07\",\n            \"avg_price\": 1314.172592592592,\n            \"min_price\": 1292.93,\n            \"max_price\": 1339.1\n        },\n        {\n            \"period\": \"2014-08\",\n            \"avg_price\": 1294.7015384615383,\n            \"min_price\": 1276.07,\n            \"max_price\": 1312.88\n        },\n        {\n            \"period\": \"2014-09\",\n            \"avg_price\": 1239.511153846154,\n            \"min_price\": 1214.86,\n            \"max_price\": 1286.59\n        },\n        {\n            \"period\": \"2014-10\",\n            \"avg_price\": 1223.5751851851853,\n            \"min_price\": 1186.26,\n            \"max_price\": 1248.42\n        },\n        {\n            \"period\": \"2014-11\",\n            \"avg_price\": 1176.1476,\n            \"min_price\": 1140.42,\n            \"max_price\": 1201.39\n        },\n        {\n            \"period\": \"2014-12\",\n            \"avg_price\": 1198.2592307692307,\n            \"min_price\": 1150.93,\n            \"max_price\": 1229.43\n        },\n        {\n            \"period\": \"2015-01\",\n            \"avg_price\": 1249.232,\n            \"min_price\": 1183.8,\n            \"max_price\": 1300.8\n        },\n        {\n            \"period\": \"2015-02\",\n            \"avg_price\": 1232.1908333333333,\n            \"min_price\": 1202.25,\n            \"max_price\": 1281.28\n        },\n        {\n            \"period\": \"2015-03\",\n            \"avg_price\": 1181.960740740741,\n            \"min_price\": 1149.7,\n            \"max_price\": 1215.16\n        },\n        {\n            \"period\": \"2015-04\",\n            \"avg_price\": 1200.678,\n            \"min_price\": 1179.18,\n            \"max_price\": 1217.58\n        },\n        {\n            \"period\": \"2015-05\",\n            \"avg_price\": 1198.2573076923074,\n            \"min_price\": 1178.43,\n            \"max_price\": 1224.09\n        },\n        {\n            \"period\": \"2015-06\",\n            \"avg_price\": 1183.6926923076924,\n            \"min_price\": 1169.96,\n            \"max_price\": 1200.41\n        },\n        {\n            \"period\": \"2015-07\",\n            \"avg_price\": 1134.8529629629627,\n            \"min_price\": 1088.99,\n            \"max_price\": 1173.07\n        },\n        {\n            \"period\": \"2015-08\",\n            \"avg_price\": 1117.771153846154,\n            \"min_price\": 1084.15,\n            \"max_price\": 1162.89\n        },\n        {\n            \"period\": \"2015-09\",\n            \"avg_price\": 1126.1042307692305,\n            \"min_price\": 1104.7,\n            \"max_price\": 1149.57\n        },\n        {\n            \"period\": \"2015-10\",\n            \"avg_price\": 1156.5580769230767,\n            \"min_price\": 1113.62,\n            \"max_price\": 1185.25\n        },\n        {\n            \"period\": \"2015-11\",\n            \"avg_price\": 1089.1261538461538,\n            \"min_price\": 1057.08,\n            \"max_price\": 1140.48\n        },\n        {\n            \"period\": \"2015-12\",\n            \"avg_price\": 1069.3819230769232,\n            \"min_price\": 1052.82,\n            \"max_price\": 1085.48\n        },\n        {\n            \"period\": \"2016-01\",\n            \"avg_price\": 1095.0048,\n            \"min_price\": 1062.16,\n            \"max_price\": 1124.71\n        },\n        {\n            \"period\": \"2016-02\",\n            \"avg_price\": 1197.3648,\n            \"min_price\": 1117.49,\n            \"max_price\": 1240.16\n        },\n        {\n            \"period\": \"2016-03\",\n            \"avg_price\": 1245.3053846153848,\n            \"min_price\": 1213.53,\n            \"max_price\": 1270.95\n        },\n        {\n            \"period\": \"2016-04\",\n            \"avg_price\": 1237.8672,\n            \"min_price\": 1215.04,\n            \"max_price\": 1265.59\n        },\n        {\n            \"period\": \"2016-05\",\n            \"avg_price\": 1260.434074074074,\n            \"min_price\": 1207.37,\n            \"max_price\": 1294.72\n        },\n        {\n            \"period\": \"2016-06\",\n            \"avg_price\": 1273.5634615384615,\n            \"min_price\": 1207.8,\n            \"max_price\": 1332.54\n        },\n        {\n            \"period\": \"2016-07\",\n            \"avg_price\": 1339.4226923076928,\n            \"min_price\": 1312.76,\n            \"max_price\": 1369.79\n        },\n        {\n            \"period\": \"2016-08\",\n            \"avg_price\": 1339.1492592592592,\n            \"min_price\": 1312.17,\n            \"max_price\": 1362.51\n        },\n        {\n            \"period\": \"2016-09\",\n            \"avg_price\": 1326.1234615384615,\n            \"min_price\": 1309.59,\n            \"max_price\": 1349\n        },\n        {\n            \"period\": \"2016-10\",\n            \"avg_price\": 1269.0753846153846,\n            \"min_price\": 1251.41,\n            \"max_price\": 1318.16\n        },\n        {\n            \"period\": \"2016-11\",\n            \"avg_price\": 1236.826923076923,\n            \"min_price\": 1183.49,\n            \"max_price\": 1301.92\n        },\n        {\n            \"period\": \"2016-12\",\n            \"avg_price\": 1152.0783999999999,\n            \"min_price\": 1127.9,\n            \"max_price\": 1180.06\n        },\n        {\n            \"period\": \"2017-01\",\n            \"avg_price\": 1190.4969230769232,\n            \"min_price\": 1150.06,\n            \"max_price\": 1217.31\n        },\n        {\n            \"period\": \"2017-02\",\n            \"avg_price\": 1232.863333333333,\n            \"min_price\": 1209.53,\n            \"max_price\": 1257.53\n        },\n        {\n            \"period\": \"2017-03\",\n            \"avg_price\": 1230.955185185185,\n            \"min_price\": 1199.69,\n            \"max_price\": 1252.8\n        },\n        {\n            \"period\": \"2017-04\",\n            \"avg_price\": 1268.8195833333332,\n            \"min_price\": 1248.17,\n            \"max_price\": 1294.45\n        },\n        {\n            \"period\": \"2017-05\",\n            \"avg_price\": 1246.0377777777776,\n            \"min_price\": 1217.57,\n            \"max_price\": 1270.21\n        },\n        {\n            \"period\": \"2017-06\",\n            \"avg_price\": 1262.094230769231,\n            \"min_price\": 1242.94,\n            \"max_price\": 1293.54\n        },\n        {\n            \"period\": \"2017-07\",\n            \"avg_price\": 1237.1492307692306,\n            \"min_price\": 1212.28,\n            \"max_price\": 1270.11\n        },\n        {\n            \"period\": \"2017-08\",\n            \"avg_price\": 1281.4859259259258,\n            \"min_price\": 1257.19,\n            \"max_price\": 1317.31\n        },\n        {\n            \"period\": \"2017-09\",\n            \"avg_price\": 1317.5831999999998,\n            \"min_price\": 1283.43,\n            \"max_price\": 1349.01\n        },\n        {\n            \"period\": \"2017-10\",\n            \"avg_price\": 1281.1988888888886,\n            \"min_price\": 1267.03,\n            \"max_price\": 1303.99\n        },\n        {\n            \"period\": \"2017-11\",\n            \"avg_price\": 1282.0107692307693,\n            \"min_price\": 1269.85,\n            \"max_price\": 1294.4\n        },\n        {\n            \"period\": \"2017-12\",\n            \"avg_price\": 1263.9195652173914,\n            \"min_price\": 1242.71,\n            \"max_price\": 1293.98\n        },\n        {\n            \"period\": \"2018-01\",\n            \"avg_price\": 1329.8577777777775,\n            \"min_price\": 1302.96,\n            \"max_price\": 1356.05\n        },\n        {\n            \"period\": \"2018-02\",\n            \"avg_price\": 1332.8291666666667,\n            \"min_price\": 1314.73,\n            \"max_price\": 1353.77\n        },\n        {\n            \"period\": \"2018-03\",\n            \"avg_price\": 1326.4003999999998,\n            \"min_price\": 1309.92,\n            \"max_price\": 1352.66\n        },\n        {\n            \"period\": \"2018-04\",\n            \"avg_price\": 1335.1188461538463,\n            \"min_price\": 1317.88,\n            \"max_price\": 1352.78\n        },\n        {\n            \"period\": \"2018-05\",\n            \"avg_price\": 1304.5955555555556,\n            \"min_price\": 1289.35,\n            \"max_price\": 1320.99\n        },\n        {\n            \"period\": \"2018-06\",\n            \"avg_price\": 1282.9187999999997,\n            \"min_price\": 1248.52,\n            \"max_price\": 1302.25\n        },\n        {\n            \"period\": \"2018-07\",\n            \"avg_price\": 1239.4422222222222,\n            \"min_price\": 1221.84,\n            \"max_price\": 1258.27\n        },\n        {\n            \"period\": \"2018-08\",\n            \"avg_price\": 1201.8429629629634,\n            \"min_price\": 1173.68,\n            \"max_price\": 1223.84\n        },\n        {\n            \"period\": \"2018-09\",\n            \"avg_price\": 1197.7803999999999,\n            \"min_price\": 1183.44,\n            \"max_price\": 1207.09\n        },\n        {\n            \"period\": \"2018-10\",\n            \"avg_price\": 1215.197777777778,\n            \"min_price\": 1188.93,\n            \"max_price\": 1235.21\n        },\n        {\n            \"period\": \"2018-11\",\n            \"avg_price\": 1220.833076923077,\n            \"min_price\": 1202.25,\n            \"max_price\": 1234.01\n        },\n        {\n            \"period\": \"2018-12\",\n            \"avg_price\": 1249.0831999999998,\n            \"min_price\": 1222.02,\n            \"max_price\": 1279.67\n        },\n        {\n            \"period\": \"2019-01\",\n            \"avg_price\": 1290.7999999999997,\n            \"min_price\": 1279.58,\n            \"max_price\": 1319.18\n        },\n        {\n            \"period\": \"2019-02\",\n            \"avg_price\": 1319.5979166666664,\n            \"min_price\": 1306.5,\n            \"max_price\": 1340.51\n        },\n        {\n            \"period\": \"2019-03\",\n            \"avg_price\": 1301.3946153846152,\n            \"min_price\": 1285.92,\n            \"max_price\": 1321.25\n        },\n        {\n            \"period\": \"2019-04\",\n            \"avg_price\": 1286.4804000000001,\n            \"min_price\": 1271.37,\n            \"max_price\": 1308.01\n        },\n        {\n            \"period\": \"2019-05\",\n            \"avg_price\": 1283.34,\n            \"min_price\": 1270.66,\n            \"max_price\": 1301.63\n        },\n        {\n            \"period\": \"2019-06\",\n            \"avg_price\": 1357.1968,\n            \"min_price\": 1306.97,\n            \"max_price\": 1425.16\n        },\n        {\n            \"period\": \"2019-07\",\n            \"avg_price\": 1414.9733333333336,\n            \"min_price\": 1385.34,\n            \"max_price\": 1442.83\n        },\n        {\n            \"period\": \"2019-08\",\n            \"avg_price\": 1499.3315384615385,\n            \"min_price\": 1412.12,\n            \"max_price\": 1546.84\n        },\n        {\n            \"period\": \"2019-09\",\n            \"avg_price\": 1527.625,\n            \"min_price\": 1526.25,\n            \"max_price\": 1529\n        },\n        {\n            \"period\": \"2019-10\",\n            \"avg_price\": 1494.931304347826,\n            \"min_price\": 1481.82,\n            \"max_price\": 1511.59\n        },\n        {\n            \"period\": \"2019-11\",\n            \"avg_price\": 1472.9451999999999,\n            \"min_price\": 1453.81,\n            \"max_price\": 1513.34\n        },\n        {\n            \"period\": \"2019-12\",\n            \"avg_price\": 1478.7611538461535,\n            \"min_price\": 1458.87,\n            \"max_price\": 1514.77\n        },\n        {\n            \"period\": \"2020-01\",\n            \"avg_price\": 1560.9003846153844,\n            \"min_price\": 1520.68,\n            \"max_price\": 1594.85\n        },\n        {\n            \"period\": \"2020-02\",\n            \"avg_price\": 1598.0358333333331,\n            \"min_price\": 1553.95,\n            \"max_price\": 1665.54\n        },\n        {\n            \"period\": \"2020-03\",\n            \"avg_price\": 1595.0744444444442,\n            \"min_price\": 1471.12,\n            \"max_price\": 1699.81\n        },\n        {\n            \"period\": \"2020-04\",\n            \"avg_price\": 1678.896,\n            \"min_price\": 1578.31,\n            \"max_price\": 1728.54\n        },\n        {\n            \"period\": \"2020-05\",\n            \"avg_price\": 1718.4719230769233,\n            \"min_price\": 1687.86,\n            \"max_price\": 1757.77\n        },\n        {\n            \"period\": \"2020-06\",\n            \"avg_price\": 1734.1826923076924,\n            \"min_price\": 1681.23,\n            \"max_price\": 1773.37\n        },\n        {\n            \"period\": \"2020-07\",\n            \"avg_price\": 1836.141111111111,\n            \"min_price\": 1768.09,\n            \"max_price\": 1966.18\n        },\n        {\n            \"period\": \"2020-08\",\n            \"avg_price\": 1970.9434615384614,\n            \"min_price\": 1908.88,\n            \"max_price\": 2069.32\n        },\n        {\n            \"period\": \"2020-09\",\n            \"avg_price\": 1925.6561538461542,\n            \"min_price\": 1854.72,\n            \"max_price\": 1972.45\n        },\n        {\n            \"period\": \"2020-10\",\n            \"avg_price\": 1902.368,\n            \"min_price\": 1879.88,\n            \"max_price\": 1928.77\n        },\n        {\n            \"period\": \"2020-11\",\n            \"avg_price\": 1845.0335714285713,\n            \"min_price\": 1769.66,\n            \"max_price\": 1895.45\n        },\n        {\n            \"period\": \"2020-12\",\n            \"avg_price\": 1858.0026923076925,\n            \"min_price\": 1784.15,\n            \"max_price\": 1899.71\n        },\n        {\n            \"period\": \"2021-01\",\n            \"avg_price\": 1865.6719999999998,\n            \"min_price\": 1811.19,\n            \"max_price\": 1950.06\n        },\n        {\n            \"period\": \"2021-02\",\n            \"avg_price\": 1809.8595833333336,\n            \"min_price\": 1734.29,\n            \"max_price\": 1856.91\n        },\n        {\n            \"period\": \"2021-03\",\n            \"avg_price\": 1723.6533333333336,\n            \"min_price\": 1684.68,\n            \"max_price\": 1750.7\n        },\n        {\n            \"period\": \"2021-04\",\n            \"avg_price\": 1756.366538461538,\n            \"min_price\": 1707.2,\n            \"max_price\": 1793.75\n        },\n        {\n            \"period\": \"2021-05\",\n            \"avg_price\": 1844.5143999999998,\n            \"min_price\": 1768.75,\n            \"max_price\": 1903.95\n        },\n        {\n            \"period\": \"2021-06\",\n            \"avg_price\": 1837.021153846154,\n            \"min_price\": 1761.22,\n            \"max_price\": 1908.21\n        },\n        {\n            \"period\": \"2021-07\",\n            \"avg_price\": 1803.4573076923077,\n            \"min_price\": 1768.24,\n            \"max_price\": 1829.79\n        },\n        {\n            \"period\": \"2021-08\",\n            \"avg_price\": 1785.3740740740739,\n            \"min_price\": 1717.82,\n            \"max_price\": 1818.61\n        },\n        {\n            \"period\": \"2021-09\",\n            \"avg_price\": 1780.603846153846,\n            \"min_price\": 1728.88,\n            \"max_price\": 1827.79\n        },\n        {\n            \"period\": \"2021-10\",\n            \"avg_price\": 1774.4973076923075,\n            \"min_price\": 1753.05,\n            \"max_price\": 1807.93\n        },\n        {\n            \"period\": \"2021-11\",\n            \"avg_price\": 1819.9615999999996,\n            \"min_price\": 1777.34,\n            \"max_price\": 1866.53\n        },\n        {\n            \"period\": \"2021-12\",\n            \"avg_price\": 1791.8508000000002,\n            \"min_price\": 1769.06,\n            \"max_price\": 1815.39\n        },\n        {\n            \"period\": \"2022-01\",\n            \"avg_price\": 1816.8020000000001,\n            \"min_price\": 1788.89,\n            \"max_price\": 1849.28\n        },\n        {\n            \"period\": \"2022-02\",\n            \"avg_price\": 1857.1091666666664,\n            \"min_price\": 1797.5,\n            \"max_price\": 1910.77\n        },\n        {\n            \"period\": \"2022-03\",\n            \"avg_price\": 1951.4533333333331,\n            \"min_price\": 1906.16,\n            \"max_price\": 2043.66\n        },\n        {\n            \"period\": \"2022-04\",\n            \"avg_price\": 1939.8951999999997,\n            \"min_price\": 1885.53,\n            \"max_price\": 1985.12\n        },\n        {\n            \"period\": \"2022-05\",\n            \"avg_price\": 1852.6633333333332,\n            \"min_price\": 1811.45,\n            \"max_price\": 1897.67\n        },\n        {\n            \"period\": \"2022-06\",\n            \"avg_price\": 1839.8999999999999,\n            \"min_price\": 1810.84,\n            \"max_price\": 1876.47\n        },\n        {\n            \"period\": \"2022-07\",\n            \"avg_price\": 1741.1723076923076,\n            \"min_price\": 1695.03,\n            \"max_price\": 1810.56\n        },\n        {\n            \"period\": \"2022-08\",\n            \"avg_price\": 1764.8481481481479,\n            \"min_price\": 1723.17,\n            \"max_price\": 1801.97\n        },\n        {\n            \"period\": \"2022-09\",\n            \"avg_price\": 1684.240384615385,\n            \"min_price\": 1627.85,\n            \"max_price\": 1725.54\n        },\n        {\n            \"period\": \"2022-10\",\n            \"avg_price\": 1666.4115384615384,\n            \"min_price\": 1627.27,\n            \"max_price\": 1724.84\n        },\n        {\n            \"period\": \"2022-11\",\n            \"avg_price\": 1724.3484615384612,\n            \"min_price\": 1629.89,\n            \"max_price\": 1781.27\n        },\n        {\n            \"period\": \"2022-12\",\n            \"avg_price\": 1796.13,\n            \"min_price\": 1768.91,\n            \"max_price\": 1817.23\n        },\n        {\n            \"period\": \"2023-01\",\n            \"avg_price\": 1893.3851851851848,\n            \"min_price\": 1823.58,\n            \"max_price\": 1947.56\n        },\n        {\n            \"period\": \"2023-02\",\n            \"avg_price\": 1856.6408695652174,\n            \"min_price\": 1811.72,\n            \"max_price\": 1952.5\n        },\n        {\n            \"period\": \"2023-03\",\n            \"avg_price\": 1910.8237037037036,\n            \"min_price\": 1813.78,\n            \"max_price\": 1991.37\n        },\n        {\n            \"period\": \"2023-04\",\n            \"avg_price\": 1999.8323999999996,\n            \"min_price\": 1957.54,\n            \"max_price\": 2039.56\n        },\n        {\n            \"period\": \"2023-05\",\n            \"avg_price\": 1992.4074074074072,\n            \"min_price\": 1941.54,\n            \"max_price\": 2052.78\n        },\n        {\n            \"period\": \"2023-06\",\n            \"avg_price\": 1944.6688461538465,\n            \"min_price\": 1908.71,\n            \"max_price\": 1977.15\n        },\n        {\n            \"period\": \"2023-07\",\n            \"avg_price\": 1946.6588461538465,\n            \"min_price\": 1911.5,\n            \"max_price\": 1977.59\n        },\n        {\n            \"period\": \"2023-08\",\n            \"avg_price\": 1920.7192307692308,\n            \"min_price\": 1889.28,\n            \"max_price\": 1963.88\n        },\n        {\n            \"period\": \"2023-09\",\n            \"avg_price\": 1919.5831999999998,\n            \"min_price\": 1866.56,\n            \"max_price\": 1941.33\n        },\n        {\n            \"period\": \"2023-10\",\n            \"avg_price\": 1912.227037037037,\n            \"min_price\": 1821.45,\n            \"max_price\": 2008.1\n        },\n        {\n            \"period\": \"2023-11\",\n            \"avg_price\": 1982.7026923076924,\n            \"min_price\": 1938.03,\n            \"max_price\": 2044.53\n        },\n        {\n            \"period\": \"2023-12\",\n            \"avg_price\": 2039.0750000000005,\n            \"min_price\": 1982.25,\n            \"max_price\": 2120.04\n        },\n        {\n            \"period\": \"2024-01\",\n            \"avg_price\": 2035.382962962963,\n            \"min_price\": 2009.5,\n            \"max_price\": 2064\n        },\n        {\n            \"period\": \"2024-02\",\n            \"avg_price\": 2025.7128,\n            \"min_price\": 1991.24,\n            \"max_price\": 2054.68\n        },\n        {\n            \"period\": \"2024-03\",\n            \"avg_price\": 2157.6528,\n            \"min_price\": 2044.08,\n            \"max_price\": 2237.65\n        },\n        {\n            \"period\": \"2024-04\",\n            \"avg_price\": 2335.2323076923076,\n            \"min_price\": 2244.75,\n            \"max_price\": 2386.84\n        },\n        {\n            \"period\": \"2024-05\",\n            \"avg_price\": 2350.255925925926,\n            \"min_price\": 2291.98,\n            \"max_price\": 2425.75\n        },\n        {\n            \"period\": \"2024-06\",\n            \"avg_price\": 2325.6884000000005,\n            \"min_price\": 2293.51,\n            \"max_price\": 2376.64\n        },\n        {\n            \"period\": \"2024-07\",\n            \"avg_price\": 2390.678148148148,\n            \"min_price\": 2324.86,\n            \"max_price\": 2471.24\n        },\n        {\n            \"period\": \"2024-08\",\n            \"avg_price\": 2469.3434615384617,\n            \"min_price\": 2384.37,\n            \"max_price\": 2525.36\n        },\n        {\n            \"period\": \"2024-09\",\n            \"avg_price\": 2566.672692307692,\n            \"min_price\": 2493.04,\n            \"max_price\": 2672.43\n        },\n        {\n            \"period\": \"2024-10\",\n            \"avg_price\": 2687.15037037037,\n            \"min_price\": 2608.38,\n            \"max_price\": 2785.47\n        },\n        {\n            \"period\": \"2024-11\",\n            \"avg_price\": 2654.195833333333,\n            \"min_price\": 2562.95,\n            \"max_price\": 2746.81\n        },\n        {\n            \"period\": \"2024-12\",\n            \"avg_price\": 2638.7940740740746,\n            \"min_price\": 2588.52,\n            \"max_price\": 2719.41\n        },\n        {\n            \"period\": \"2025-01\",\n            \"avg_price\": 2624.8,\n            \"min_price\": 2624.8,\n            \"max_price\": 2624.8\n        }\n    ],\n    \"count\": 150\n}"
+						}
+					]
+				},
+				{
+					"name": "fetch_gold_data",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}finnomenaGold/fetch-gold-data/?db_choice=0",
+							"host": [
+								"{{URL}}finnomenaGold"
+							],
+							"path": [
+								"fetch-gold-data",
+								""
+							],
+							"query": [
+								{
+									"key": "db_choice",
+									"value": "0",
+									"description": "0 = TH"
+								},
+								{
+									"key": "db_choice",
+									"value": "1",
+									"description": "1 = US",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "fetch_gold_data",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}finnomenaGold/fetch-gold-data/?db_choice=0",
+									"host": [
+										"{{URL}}finnomenaGold"
+									],
+									"path": [
+										"fetch-gold-data",
+										""
+									],
+									"query": [
+										{
+											"key": "db_choice",
+											"value": "0",
+											"description": "0 = TH"
+										},
+										{
+											"key": "db_choice",
+											"value": "1",
+											"description": "1 = US",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 20 Feb 2025 19:08:28 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.11.9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Vary",
+									"value": "origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "72"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Cross-Origin-Opener-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Data fetched and saved successfully. 0 new records added.\"\n}"
+						}
+					]
+				},
+				{
+					"name": "delete-all-gold-data",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}finnomenaGold/delete-all-gold-data/?contry_table=Gold_TH",
+							"host": [
+								"{{URL}}finnomenaGold"
+							],
+							"path": [
+								"delete-all-gold-data",
+								""
+							],
+							"query": [
+								{
+									"key": "contry_table",
+									"value": "Gold_TH",
+									"description": "!! อย่ากดเล่น"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "delete-all-gold-data",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}finnomenaGold/delete-all-gold-data/?contry_table=Gold_TH",
+									"host": [
+										"{{URL}}finnomenaGold"
+									],
+									"path": [
+										"delete-all-gold-data",
+										""
+									],
+									"query": [
+										{
+											"key": "contry_table",
+											"value": "Gold_TH"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 20 Feb 2025 19:08:41 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.11.9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Vary",
+									"value": "origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "48"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Cross-Origin-Opener-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"All records deleted successfully.\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "api",
+			"item": [
+				{
+					"name": "test_gcp",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}api/test-gcp/",
+							"host": [
+								"{{URL}}api"
+							],
+							"path": [
+								"test-gcp",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "view-files-bucket",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}api/view-files-bucket/?bucket_name=gpw_bucket",
+							"host": [
+								"{{URL}}api"
+							],
+							"path": [
+								"view-files-bucket",
+								""
+							],
+							"query": [
+								{
+									"key": "bucket_name",
+									"value": "gpw_bucket"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "currency",
+			"item": [
+				{
+					"name": "get_currency_data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}currency/get/?start=2024-01-13&end=2024-01-13",
+							"host": [
+								"{{URL}}currency"
+							],
+							"path": [
+								"get",
+								""
+							],
+							"query": [
+								{
+									"key": "frame",
+									"value": "1d",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "7d",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "15d",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "1m",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "3m",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "1y",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "3y",
+									"disabled": true
+								},
+								{
+									"key": "frame",
+									"value": "all",
+									"disabled": true
+								},
+								{
+									"key": "start",
+									"value": "2024-01-13"
+								},
+								{
+									"key": "end",
+									"value": "2024-01-13"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}currency/get/?start=2024-01-13&end=2024-01-13",
+									"host": [
+										"{{URL}}currency"
+									],
+									"path": [
+										"get",
+										""
+									],
+									"query": [
+										{
+											"key": "frame",
+											"value": "1d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "7d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "15d",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "1m",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "3m",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "1y",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "3y",
+											"disabled": true
+										},
+										{
+											"key": "frame",
+											"value": "all",
+											"disabled": true
+										},
+										{
+											"key": "start",
+											"value": "2024-01-13"
+										},
+										{
+											"key": "end",
+											"value": "2024-01-13"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 20 Feb 2025 18:43:34 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.11.9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Vary",
+									"value": "origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "162"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Cross-Origin-Opener-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"data\": [\n        {\n            \"id\": 79339,\n            \"date\": \"2024-01-13\",\n            \"price\": 34.8867,\n            \"open\": 35.0667,\n            \"high\": 35.1133,\n            \"low\": 34.8217,\n            \"percent\": 0.0765,\n            \"diff\": 0.0267\n        }\n    ],\n    \"count\": 1\n}"
+						}
+					]
+				},
+				{
+					"name": "delete",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}currency/delete/?currency=usd",
+							"host": [
+								"{{URL}}currency"
+							],
+							"path": [
+								"delete",
+								""
+							],
+							"query": [
+								{
+									"key": "currency",
+									"value": "usd"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "delete",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{URL}}currency/delete/?currency=usd",
+									"host": [
+										"{{URL}}currency"
+									],
+									"path": [
+										"delete",
+										""
+									],
+									"query": [
+										{
+											"key": "currency",
+											"value": "usd"
+										}
+									]
+								}
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 20 Feb 2025 18:48:24 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.11.9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "DELETE, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "42"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Cross-Origin-Opener-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Deleted all records for USD.\"\n}"
+						}
+					]
+				},
+				{
+					"name": "upload",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1efe5e11-b87c-4660-bdc0-0a5963e4dc7b"
+								},
+								{
+									"key": "currency",
+									"value": "usd",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URL}}currency/upload/",
+							"host": [
+								"{{URL}}currency"
+							],
+							"path": [
+								"upload",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "upload",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": "postman-cloud:///1efe5e11-b87c-4660-bdc0-0a5963e4dc7b"
+										},
+										{
+											"key": "currency",
+											"value": "usd",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{URL}}currency/upload/",
+									"host": [
+										"{{URL}}currency"
+									],
+									"path": [
+										"upload",
+										""
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 20 Feb 2025 18:49:41 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.11.9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "POST, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "95"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Cross-Origin-Opener-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Data uploaded and saved to usdthb successfully. File saved as usd-210225_0149.csv\"\n}"
+						}
+					]
+				},
+				{
+					"name": "add-crrencyth",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"date\" : \"2025-02-22\",\r\n    \"price\" : \"222222222222222222222222222\"\r\n    // \"price\" : \"222222222222222222222222222\",\r\n    // \"open\" : \"11\",\r\n    // \"high\" : \"22\",\r\n    // \"low\" : \"33\",\r\n    // \"percent\" : \"44\",\r\n    // \"diff\" : \"55\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}currency/add-crrencyth/",
+							"host": [
+								"{{URL}}currency"
+							],
+							"path": [
+								"add-crrencyth",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "http://34.1.193.71:8000/currency/add-crrencyth/",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"date\" : \"2025-02-22\",\r\n    \"price\" : \"222222222222222222222222222\"\r\n    // \"price\" : \"222222222222222222222222222\",\r\n    // \"open\" : \"11\",\r\n    // \"high\" : \"22\",\r\n    // \"low\" : \"33\",\r\n    // \"percent\" : \"44\",\r\n    // \"diff\" : \"55\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{URL}}currency/add-crrencyth/",
+									"host": [
+										"{{URL}}currency"
+									],
+									"path": [
+										"add-crrencyth",
+										""
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 20 Feb 2025 18:59:44 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.11.9"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Vary",
+									"value": "origin"
+								},
+								{
+									"key": "Content-Length",
+									"value": "182"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								},
+								{
+									"key": "Cross-Origin-Opener-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Data added successfully\",\n    \"data\": {\n        \"date\": \"2025-02-22\",\n        \"price\": \"222222222222222222222222222\",\n        \"open\": \"11\",\n        \"high\": \"22\",\n        \"low\": \"33\",\n        \"percent\": \"44\",\n        \"diff\": \"55\"\n    }\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "predicts",
+			"item": [
+				{
+					"name": "crud",
+					"item": [
+						{
+							"name": "week",
+							"item": [
+								{
+									"name": "week/create",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"timestamp\" : 16277472001212, // timestamp ห้ามบันทึกซ้ำ\r\n    \"price_0\" : 800.8899,\r\n    \"price_1\" : 811.77,\r\n    \"price_2\" : 822.66,\r\n    \"price_3\" : 833.55,\r\n    \"price_4\" : 844.44,\r\n    \"price_5\" : 855.33,\r\n    \"price_6\" : 866.22,\r\n    \"price_7\" : 877.11,\r\n    \"date\" : \"2021-07-31\",\r\n    \"created_at\" : \"2021-07-31T00:00:00Z\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{URL}}/predicts/week/create/",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"predicts",
+												"week",
+												"create",
+												""
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "week/read",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/predicts/week/read/?week_id=12",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"predicts",
+												"week",
+												"read",
+												""
+											],
+											"query": [
+												{
+													"key": "week_id",
+													"value": "12"
+												},
+												{
+													"key": "range",
+													"value": "all",
+													"disabled": true
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"name": "week/read-lastest",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{URL}}/predicts/week/read/",
+													"host": [
+														"{{URL}}"
+													],
+													"path": [
+														"predicts",
+														"week",
+														"read",
+														""
+													],
+													"query": [
+														{
+															"key": "week_id",
+															"value": "2",
+															"disabled": true
+														},
+														{
+															"key": "range",
+															"value": "all",
+															"disabled": true
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Thu, 20 Feb 2025 20:06:58 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.11.9"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Vary",
+													"value": "origin"
+												},
+												{
+													"key": "Content-Length",
+													"value": "334"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"status\": \"success\",\n    \"week\": {\n        \"timestamp\": 1739203856,\n        \"price_0\": 41495.31640625,\n        \"price_1\": 41314.84765625,\n        \"price_2\": 41256.03515625,\n        \"price_3\": 41286.7265625,\n        \"price_4\": 40990.12890625,\n        \"price_5\": 41119.4140625,\n        \"price_6\": 41124.71484375,\n        \"price_7\": 40895.67578125,\n        \"date\": \"2025-02-10\",\n        \"created_at\": \"2025-02-10T16:10:56.736Z\"\n    }\n}"
+										},
+										{
+											"name": "week/read-byId",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{URL}}/predicts/week/read/?week_id=1",
+													"host": [
+														"{{URL}}"
+													],
+													"path": [
+														"predicts",
+														"week",
+														"read",
+														""
+													],
+													"query": [
+														{
+															"key": "week_id",
+															"value": "1"
+														},
+														{
+															"key": "range",
+															"value": "all",
+															"disabled": true
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Thu, 20 Feb 2025 20:07:34 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.11.9"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Vary",
+													"value": "origin"
+												},
+												{
+													"key": "Content-Length",
+													"value": "328"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"status\": \"success\",\n    \"week\": {\n        \"timestamp\": 1738981791,\n        \"price_0\": 41794.5859375,\n        \"price_1\": 41555.45703125,\n        \"price_2\": 41529.26953125,\n        \"price_3\": 41562.6015625,\n        \"price_4\": 41246.1015625,\n        \"price_5\": 41367.2734375,\n        \"price_6\": 41410.0625,\n        \"price_7\": 41187.93359375,\n        \"date\": \"2025-02-08\",\n        \"created_at\": \"2025-02-08T02:29:51.463Z\"\n    }\n}"
+										},
+										{
+											"name": "week/read-all",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{URL}}/predicts/week/read/?range=all",
+													"host": [
+														"{{URL}}"
+													],
+													"path": [
+														"predicts",
+														"week",
+														"read",
+														""
+													],
+													"query": [
+														{
+															"key": "week_id",
+															"value": "1",
+															"disabled": true
+														},
+														{
+															"key": "range",
+															"value": "all"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Date",
+													"value": "Thu, 20 Feb 2025 20:08:03 GMT"
+												},
+												{
+													"key": "Server",
+													"value": "WSGIServer/0.2 CPython/3.11.9"
+												},
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												},
+												{
+													"key": "X-Frame-Options",
+													"value": "DENY"
+												},
+												{
+													"key": "Vary",
+													"value": "origin"
+												},
+												{
+													"key": "Content-Length",
+													"value": "877"
+												},
+												{
+													"key": "X-Content-Type-Options",
+													"value": "nosniff"
+												},
+												{
+													"key": "Referrer-Policy",
+													"value": "same-origin"
+												},
+												{
+													"key": "Cross-Origin-Opener-Policy",
+													"value": "same-origin"
+												}
+											],
+											"cookie": [],
+											"body": "{\n    \"status\": \"success\",\n    \"weeks\": [\n        {\n            \"timestamp\": 1738981791,\n            \"price_0\": 41794.5859375,\n            \"price_1\": 41555.45703125,\n            \"price_2\": 41529.26953125,\n            \"price_3\": 41562.6015625,\n            \"price_4\": 41246.1015625,\n            \"price_5\": 41367.2734375,\n            \"price_6\": 41410.0625,\n            \"price_7\": 41187.93359375,\n            \"date\": \"2025-02-08\",\n            \"created_at\": \"2025-02-08T02:29:51.463Z\"\n        },\n        {\n            \"timestamp\": 1739203856,\n            \"price_0\": 41495.31640625,\n            \"price_1\": 41314.84765625,\n            \"price_2\": 41256.03515625,\n            \"price_3\": 41286.7265625,\n            \"price_4\": 40990.12890625,\n            \"price_5\": 41119.4140625,\n            \"price_6\": 41124.71484375,\n            \"price_7\": 40895.67578125,\n            \"date\": \"2025-02-10\",\n            \"created_at\": \"2025-02-10T16:10:56.736Z\"\n        },\n        {\n            \"timestamp\": 1627747200,\n            \"price_0\": 800.8899,\n            \"price_1\": 811.77,\n            \"price_2\": 822.66,\n            \"price_3\": 833.55,\n            \"price_4\": 844.44,\n            \"price_5\": 855.33,\n            \"price_6\": 866.22,\n            \"price_7\": 877.11,\n            \"date\": \"2021-07-31\",\n            \"created_at\": \"2021-07-31T00:00:00Z\"\n        }\n    ]\n}"
+										}
+									]
+								},
+								{
+									"name": "week/update",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"timestamp\": \"21123000000000\",\r\n    \"price_0\": 1000,\r\n    \"price_1\": 1500,\r\n    \"price_2\": 2000,\r\n    \"price_3\": 2500,\r\n    \"price_4\": 3000,\r\n    \"price_5\": 3500,\r\n    \"price_6\": 4000,\r\n    \"price_7\": 4500,\r\n    \"date\": \"2025-02-20\",\r\n    \"created_at\": \"2025-02-20 10:00:00\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{URL}}/predicts/week/update/?id=12",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"predicts",
+												"week",
+												"update",
+												""
+											],
+											"query": [
+												{
+													"key": "id",
+													"value": "12"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "week/delete",
+									"request": {
+										"auth": {
+											"type": "noauth"
+										},
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{URL}}/predicts/week/delete/?week_id=14",
+											"host": [
+												"{{URL}}"
+											],
+											"path": [
+												"predicts",
+												"week",
+												"delete",
+												""
+											],
+											"query": [
+												{
+													"key": "week_id",
+													"value": "14"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "month",
+							"item": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "URL",
+			"value": "http://34.1.193.71:8000/",
+			"type": "string",
+			"disabled": true
+		},
+		{
+			"key": "URL",
+			"value": "http://127.0.0.1:8000/",
+			"type": "string"
+		}
+	]
+}

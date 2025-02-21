@@ -3,6 +3,7 @@ import requests
 from django.http import JsonResponse
 from django.apps import apps
 from datetime import datetime, timezone, timedelta
+from django.db.models import Avg, Min, Max
 from django.db import transaction
 
 currentDateTime = datetime.now().strftime('%Y-%m-%d')
@@ -26,8 +27,6 @@ def fetch_gold_data(request):
         return fetch_gold_th_data(request)
     elif db_choice == '1':
         return fetch_gold_us_data(request)
-    # elif db_choice == '2':
-    #     return fetch_currency(request)
     else:
         return JsonResponse({"error": "Invalid 'db_choice' parameter value."}, status=400)
 
@@ -75,10 +74,13 @@ def fetch_gold_th_data(request):
         return JsonResponse({"error": "Failed to fetch data from Finnomena Gold TH API.", "status_code": response.status_code}, status=500)
 
 def fetch_gold_us_data(request):
-    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2025-01-01/{currentDateTime}"
+    # initial data 
     # url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2005-01-01/{currentDateTime}"
+    # initial data
+    daysAgo5 = (datetime.now() - timedelta(days=5)).strftime('%Y-%m-%d')
+    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/{daysAgo5}/{currentDateTime}"
     contry_table = apps.get_model('finnomenaGold', 'Gold_US')
-    print("url us : ", url)
+    print(f"✅ > url us : {url}")
 
     response = requests.get(url)
     if response.status_code == 200:
@@ -153,6 +155,7 @@ def get_gold_data(request):
     frame = request.GET.get('frame', None)
     start_param = request.GET.get('start', None)
     end_param = request.GET.get('end', None)
+    group_by = request.GET.get('group_by', 'daily')
 
     try:
         if start_param:
@@ -192,13 +195,29 @@ def get_gold_data(request):
             queryset = queryset.filter(created_at__date__gte=start_timeframe)
         queryset = queryset.filter(created_at__date__lte=end_timeframe)
 
-        if frame == "1d" and not queryset.exists():
-            latest_entry = table_model.objects.order_by('-created_at').first()
-            if latest_entry:
-                queryset = table_model.objects.filter(created_at__date=latest_entry.created_at.date())
+        if group_by == "daily":
+            queryset = queryset.order_by('created_at')
+            data = list(queryset.values())
 
-        queryset = queryset.order_by('id')
-        data = list(queryset.values())
+        elif group_by == "monthly":
+            queryset = queryset.values("created_at__year", "created_at__month").annotate(
+                avg_price=Avg("price"),
+                min_price=Min("price"),
+                max_price=Max("price")
+            ).order_by("created_at__year", "created_at__month")
+
+            data = [
+                {
+                    "period": f"{entry['created_at__year']}-{entry['created_at__month']:02d}",
+                    "avg_price": entry["avg_price"],
+                    "min_price": entry["min_price"],
+                    "max_price": entry["max_price"],
+                }
+                for entry in queryset
+            ]
+
+        else:
+            return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
 
         return JsonResponse({"data": data, "count": len(data)})
 

@@ -1,13 +1,15 @@
 import pandas as pd
 import os
+from django.db.models import Avg, Min, Max
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from .models import USDTHB, CNYTHB
 from .serializers import USDTHBSerializer, CNYTHBSerializer
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
 import json
 from django.http import JsonResponse
 
@@ -138,35 +140,6 @@ class CurrencyDataUploadView(APIView):
 
         return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
 
-# class CurrencyDataListView(APIView):
-
-#     def get(self, request, format=None):
-#         start_date = request.query_params.get('start_date')
-#         end_date = request.query_params.get('end_date')
-#         currency = request.query_params.get('currency')
-
-#         if currency:
-#             if currency.lower() == 'usd':
-#                 model = USDTHB
-#             elif currency.lower() == 'cny':
-#                 model = CNYTHB
-#             else:
-#                 return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
-
-#             if start_date and end_date:
-#                 data = model.objects.filter(date__range=[start_date, end_date]).order_by('date')
-#             else:
-#                 data = model.objects.all().order_by('date')
-
-#             if currency.lower() == 'usd':
-#                 serializer = USDTHBSerializer(data, many=True)
-#             else:
-#                 serializer = CNYTHBSerializer(data, many=True)
-
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-
-#         return Response({"error": "Currency not specified."}, status=status.HTTP_400_BAD_REQUEST)
-
 class CurrencyDataDeleteView(APIView):
 
     def delete(self, request, format=None):
@@ -223,13 +196,11 @@ class CurrencyDataDeleteByIdView(APIView):
 
         return Response({"error": "Currency not specified."}, status=status.HTTP_400_BAD_REQUEST)
 
-
-from django.db.models import Q
-from datetime import datetime, timedelta
 def get_currency_data(request):
     frame = request.GET.get('frame', None)
     start_date = request.GET.get('start', None)
     end_date = request.GET.get('end', None)
+    group_by = request.GET.get('group_by', 'daily')  # Default เป็นรายวัน
 
     try:
         if start_date:
@@ -277,9 +248,40 @@ def get_currency_data(request):
         if latest_entry:
             queryset = USDTHB.objects.filter(date=latest_entry.date)
 
-    queryset = queryset.order_by('id')
+    # 🟢 Grouping Logic
+    if group_by == "daily":
+        queryset = queryset.order_by('date')
+        data = list(queryset.values())  # ส่งข้อมูลไปแบบเดิม
 
-    data = list(queryset.values())
+    elif group_by == "monthly":
+        queryset = queryset.values("date__year", "date__month").annotate(
+            avg_price=Avg("price"),
+            avg_open=Avg("open"),
+            avg_high=Avg("high"),
+            avg_low=Avg("low"),
+            avg_percent=Avg("percent"),
+            avg_diff=Avg("diff"),
+            min_price=Min("price"),
+            max_price=Max("price"),
+        ).order_by("date__year", "date__month")
+
+        data = [
+            {
+                "period": f"{entry['date__year']}-{entry['date__month']:02d}",
+                "avg_price": entry["avg_price"],
+                "avg_open": entry["avg_open"],
+                "avg_high": entry["avg_high"],
+                "avg_low": entry["avg_low"],
+                "avg_percent": entry["avg_percent"],
+                "avg_diff": entry["avg_diff"],
+                "min_price": entry["min_price"],
+                "max_price": entry["max_price"],
+            }
+            for entry in queryset
+        ]
+
+    else:
+        return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
 
     return JsonResponse({"data": data, "count": len(data)})
 

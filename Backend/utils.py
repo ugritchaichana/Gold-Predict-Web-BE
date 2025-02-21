@@ -1,6 +1,7 @@
 from google.cloud import storage
 from django.conf import settings
 
+
 def test_gcp_connection():
     try:
         client = storage.Client(

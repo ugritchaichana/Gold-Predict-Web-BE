@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'predicts',
     'finnomenaGold',
     'logging_app',
+    'django_extensions',
 ]
 
 
