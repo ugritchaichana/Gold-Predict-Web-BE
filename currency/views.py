@@ -78,10 +78,11 @@ class CurrencyDataUploadView(APIView):
             return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
 
         df = pd.read_csv(file)
-        df = df.drop(columns=['ปริมาณ'])
+        df = df.drop(columns=['ปริมาณ'], errors='ignore')
         df.columns = ['Date', 'Price', 'Open', 'High', 'Low', 'Percent']
+        
         df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
-        df['Percent'] = pd.to_numeric(df['Percent'].str.replace('%', ''), errors='coerce')
+        df['Percent'] = pd.to_numeric(df['Percent'].str.replace('%', '', regex=True), errors='coerce')
 
         full_dates = pd.date_range(start=df['Date'].min(), end=df['Date'].max(), freq='D')
         df = df.set_index('Date').reindex(full_dates).reset_index()
@@ -92,53 +93,26 @@ class CurrencyDataUploadView(APIView):
         df['Percent'] = df['Percent'].fillna(0)
         df['Diff'] = df['Price'].diff().fillna(0)
 
-        df['Price'] = df['Price'].round(4)
-        df['Open'] = df['Open'].round(4)
-        df['High'] = df['High'].round(4)
-        df['Low'] = df['Low'].round(4)
-        df['Percent'] = df['Percent'].round(4)
-        df['Diff'] = df['Diff'].round(4)
-
-        output_folder = f'cleaned-files/{currency}'
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
-
-        current_time = datetime.now().strftime("%d%m%y_%H%M")
-        file_name = f"{currency.lower()}-{current_time}.csv"
-        file_path = os.path.join(output_folder, file_name)
-
-        df.to_csv(file_path, index=False)
+        df = df.round({'Price': 4, 'Open': 4, 'High': 4, 'Low': 4, 'Percent': 4, 'Diff': 4})
 
         objects_to_create = []
-        if currency.lower() == 'usd':
-            for _, row in df.iterrows():
-                objects_to_create.append(USDTHB(
-                    date=row['Date'],
-                    price=row['Price'],
-                    open=row['Open'],
-                    high=row['High'],
-                    low=row['Low'],
-                    percent=row['Percent'],
-                    diff=row['Diff']
-                ))
-            USDTHB.objects.bulk_create(objects_to_create)
-            return Response({"message": f"Data uploaded and saved to usdthb successfully. File saved as {file_name}"}, status=status.HTTP_201_CREATED)
+        model = USDTHB if currency.lower() == 'usd' else CNYTHB
 
-        elif currency.lower() == 'cny':
-            for _, row in df.iterrows():
-                objects_to_create.append(CNYTHB(
-                    date=row['Date'],
-                    price=row['Price'],
-                    open=row['Open'],
-                    high=row['High'],
-                    low=row['Low'],
-                    percent=row['Percent'],
-                    diff=row['Diff']
-                ))
-            CNYTHB.objects.bulk_create(objects_to_create)
-            return Response({"message": f"Data uploaded and saved to cnythb successfully. File saved as {file_name}"}, status=status.HTTP_201_CREATED)
+        for _, row in df.iterrows():
+            objects_to_create.append(model(
+                date=row['Date'],
+                price=row['Price'],
+                open=row['Open'],
+                high=row['High'],
+                low=row['Low'],
+                percent=row['Percent'],
+                diff=row['Diff']
+            ))
 
-        return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
+        model.objects.bulk_create(objects_to_create)
+
+        return Response({"message": f"Data uploaded and saved to {model.__name__.lower()} successfully."},
+                        status=status.HTTP_201_CREATED)
 
 class CurrencyDataDeleteView(APIView):
 
@@ -200,7 +174,7 @@ def get_currency_data(request):
     frame = request.GET.get('frame', None)
     start_date = request.GET.get('start', None)
     end_date = request.GET.get('end', None)
-    group_by = request.GET.get('group_by', 'daily')  # Default เป็นรายวัน
+    group_by = request.GET.get('group_by', 'daily')
 
     try:
         if start_date:
@@ -251,7 +225,7 @@ def get_currency_data(request):
     # 🟢 Grouping Logic
     if group_by == "daily":
         queryset = queryset.order_by('date')
-        data = list(queryset.values())  # ส่งข้อมูลไปแบบเดิม
+        data = list(queryset.values())
 
     elif group_by == "monthly":
         queryset = queryset.values("date__year", "date__month").annotate(
