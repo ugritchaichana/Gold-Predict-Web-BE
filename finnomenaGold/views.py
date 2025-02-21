@@ -5,6 +5,7 @@ from django.apps import apps
 from datetime import datetime, timezone, timedelta
 from django.db.models import Avg, Min, Max
 from django.db import transaction
+from django.core.cache import cache
 
 currentDateTime = datetime.now().strftime('%Y-%m-%d')
 
@@ -157,6 +158,14 @@ def get_gold_data(request):
     end_param = request.GET.get('end', None)
     group_by = request.GET.get('group_by', 'daily')
 
+    cache_time = 3600
+    cache_param = request.GET.get('cache', 'True').lower()
+
+    if cache_param == 'false':
+        use_cache = False
+    else:
+        use_cache = True
+
     try:
         if start_param:
             start_timeframe = datetime.strptime(start_param, "%d-%m-%Y").date()
@@ -174,11 +183,11 @@ def get_gold_data(request):
             elif frame == "15d":
                 start_timeframe = end_timeframe - timedelta(days=14)
             elif frame == "1m":
-                start_timeframe = (end_timeframe.replace(day=1) - timedelta(days=1)).replace(day=end_timeframe.day)
+                start_timeframe = (end_timeframe - timedelta(days=30)).replace(day=1)
             elif frame == "3m":
-                start_timeframe = (end_timeframe - timedelta(days=90)).replace(day=end_timeframe.day)
+                start_timeframe = (end_timeframe - timedelta(days=90)).replace(day=1)
             elif frame == "6m":
-                start_timeframe = (end_timeframe - timedelta(days=180)).replace(day=end_timeframe.day)
+                start_timeframe = (end_timeframe - timedelta(days=180)).replace(day=1)
             elif frame == "1y":
                 start_timeframe = end_timeframe.replace(year=end_timeframe.year - 1)
             elif frame == "3y":
@@ -189,6 +198,42 @@ def get_gold_data(request):
                 return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
 
         table_model = apps.get_model('finnomenaGold', table_name)
+
+        cache_key = f"gold_data:{db_choice}:{frame}:{start_timeframe}:{end_timeframe}:{group_by}"
+        count_cache_key = f"gold_data_count:{db_choice}:{group_by}"
+
+        if use_cache:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                print(f"✅ Checking cached data for key: {cache_key}")
+                cached_params = cached_data.get('params', {})
+
+                if cached_params == {'start': start_timeframe, 'end': end_timeframe, 'frame': frame, 'group_by': group_by}:
+                    print(f"✅ Using cached data for key: {cache_key}")
+                    data = cached_data["data"]
+
+                    if group_by == "monthly":
+                        data = [entry for entry in data if (start_timeframe is None or entry["period"] >= f"{start_timeframe.year}-{start_timeframe.month:02d}") and (end_timeframe is None or entry["period"] <= f"{end_timeframe.year}-{end_timeframe.month:02d}")]
+
+                    elif group_by == "daily":
+                        data = [entry for entry in data if (start_timeframe is None or entry["created_at"].date() >= start_timeframe) and (end_timeframe is None or entry["created_at"].date() <= end_timeframe)]
+
+                    return JsonResponse({"data": data, "count": len(data)}, status=200)
+
+        current_record_count = table_model.objects.count()
+        latest_record = table_model.objects.aggregate(last_updated=Max("created_at"))
+
+        cached_count_data = cache.get(count_cache_key)
+        if cached_count_data:
+            if isinstance(cached_count_data, tuple) and len(cached_count_data) == 2:
+                cached_count, cached_latest = cached_count_data
+                if cached_count == current_record_count and cached_latest == latest_record["last_updated"]:
+                    print(f"✅ Cache is valid, but missing data - refetching complete data")
+                else:
+                    cache.delete(cache_key)
+                    print(f"❌ Invalid cache, deleting old data for key: {cache_key}")
+
+        print(f"⏳ Querying database for key: {cache_key}")
         queryset = table_model.objects.all()
 
         if start_timeframe:
@@ -218,6 +263,11 @@ def get_gold_data(request):
 
         else:
             return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
+
+        if use_cache:
+            cache.set(count_cache_key, (current_record_count, latest_record["last_updated"]), timeout=cache_time)
+            cache.set(cache_key, {"data": data, "count": len(data), "params": {'start': start_timeframe, 'end': end_timeframe, 'frame': frame, 'group_by': group_by}}, timeout=cache_time)
+            print(f"💾 Cached data for key: {cache_key}")
 
         return JsonResponse({"data": data, "count": len(data)})
 

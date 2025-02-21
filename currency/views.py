@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 import json
 from django.http import JsonResponse
+from django.core.cache import cache
 
 class CurrencyDataCreateView(APIView):
     def post(self, request, format=None):
@@ -170,11 +171,48 @@ class CurrencyDataDeleteByIdView(APIView):
 
         return Response({"error": "Currency not specified."}, status=status.HTTP_400_BAD_REQUEST)
 
+@csrf_exempt
+def add_usdthb_data(request):
+    if request.method == 'POST':
+        try:
+            # รับข้อมูล JSON จาก request
+            data = json.loads(request.body)
+
+            # ตรวจสอบว่า keys ของข้อมูลครบถ้วนหรือไม่
+            date = data.get('date')
+            price = data.get('price', None)
+            open_value = data.get('open', None)
+            high = data.get('high', None)
+            low = data.get('low', None)
+            percent = data.get('percent', None)
+            diff = data.get('diff', None)
+
+            # สร้าง record ใหม่
+            usdthb_record = USDTHB.objects.create(
+                date=date,
+                price=price,
+                open=open_value,
+                high=high,
+                low=low,
+                percent=percent,
+                diff=diff
+            )
+
+            return JsonResponse({"message": "Data added successfully", "data": data}, status=201)
+        
+        except Exception as e:
+            return JsonResponse({"message": str(e)}, status=400)
+
+    return JsonResponse({"message": "Only POST method is allowed"}, status=405)
+
 def get_currency_data(request):
     frame = request.GET.get('frame', None)
     start_date = request.GET.get('start', None)
     end_date = request.GET.get('end', None)
     group_by = request.GET.get('group_by', 'daily')
+
+    cache_time = 3600  # Cache time in seconds (1 hour)
+    use_cache = request.GET.get('cache', 'True').lower() != 'false'
 
     try:
         if start_date:
@@ -209,6 +247,16 @@ def get_currency_data(request):
             start_date = None
         else:
             return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
+
+    # Cache key
+    cache_key = f"currency_data:{start_date}:{end_date}:{frame}:{group_by}"
+
+    # Check Cache first
+    if use_cache:
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            print(f"✅ Using cached data for key: {cache_key}")
+            return JsonResponse({"data": cached_data["data"], "count": len(cached_data["data"])}, status=200)
 
     queryset = USDTHB.objects.all()
 
@@ -257,38 +305,100 @@ def get_currency_data(request):
     else:
         return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
 
+    # Store the result in cache
+    if use_cache:
+        cache.set(cache_key, {"data": data}, timeout=cache_time)
+        print(f"💾 Cached data for key: {cache_key}")
+
     return JsonResponse({"data": data, "count": len(data)})
 
-@csrf_exempt
-def add_usdthb_data(request):
-    if request.method == 'POST':
-        try:
-            # รับข้อมูล JSON จาก request
-            data = json.loads(request.body)
 
-            # ตรวจสอบว่า keys ของข้อมูลครบถ้วนหรือไม่
-            date = data.get('date')
-            price = data.get('price', None)
-            open_value = data.get('open', None)
-            high = data.get('high', None)
-            low = data.get('low', None)
-            percent = data.get('percent', None)
-            diff = data.get('diff', None)
 
-            # สร้าง record ใหม่
-            usdthb_record = USDTHB.objects.create(
-                date=date,
-                price=price,
-                open=open_value,
-                high=high,
-                low=low,
-                percent=percent,
-                diff=diff
-            )
+# def get_currency_data(request):
+#     frame = request.GET.get('frame', None)
+#     start_date = request.GET.get('start', None)
+#     end_date = request.GET.get('end', None)
+#     group_by = request.GET.get('group_by', 'daily')
 
-            return JsonResponse({"message": "Data added successfully", "data": data}, status=201)
-        
-        except Exception as e:
-            return JsonResponse({"message": str(e)}, status=400)
+#     try:
+#         if start_date:
+#             start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+#         if end_date:
+#             end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+#         if start_date and end_date and start_date > end_date:
+#             return JsonResponse({"error": "'start' date cannot be after 'end' date."}, status=400)
+#     except ValueError:
+#         return JsonResponse({"error": "Invalid date format. Use 'YYYY-MM-DD'."}, status=400)
 
-    return JsonResponse({"message": "Only POST method is allowed"}, status=405)
+#     end_timeframe = datetime.now().date()
+#     if not start_date:
+#         start_date = end_timeframe
+
+#     if frame:
+#         if frame == "1d":
+#             start_date = end_timeframe
+#         elif frame == "7d":
+#             start_date = end_timeframe - timedelta(days=6)
+#         elif frame == "15d":
+#             start_date = end_timeframe - timedelta(days=14)
+#         elif frame == "1m":
+#             start_date = end_timeframe.replace(day=1)
+#         elif frame == "3m":
+#             start_date = end_timeframe - timedelta(days=90)
+#         elif frame == "1y":
+#             start_date = end_timeframe.replace(year=end_timeframe.year - 1)
+#         elif frame == "3y":
+#             start_date = end_timeframe.replace(year=end_timeframe.year - 3)
+#         elif frame == "all":
+#             start_date = None
+#         else:
+#             return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
+
+#     queryset = USDTHB.objects.all()
+
+#     if start_date:
+#         queryset = queryset.filter(date__gte=start_date)
+#     if end_date:
+#         queryset = queryset.filter(date__lte=end_date)
+
+#     if frame == "1d" and not queryset.exists():
+#         latest_entry = USDTHB.objects.order_by('-date').first()
+#         if latest_entry:
+#             queryset = USDTHB.objects.filter(date=latest_entry.date)
+
+#     # 🟢 Grouping Logic
+#     if group_by == "daily":
+#         queryset = queryset.order_by('date')
+#         data = list(queryset.values())
+
+#     elif group_by == "monthly":
+#         queryset = queryset.values("date__year", "date__month").annotate(
+#             avg_price=Avg("price"),
+#             avg_open=Avg("open"),
+#             avg_high=Avg("high"),
+#             avg_low=Avg("low"),
+#             avg_percent=Avg("percent"),
+#             avg_diff=Avg("diff"),
+#             min_price=Min("price"),
+#             max_price=Max("price"),
+#         ).order_by("date__year", "date__month")
+
+#         data = [
+#             {
+#                 "period": f"{entry['date__year']}-{entry['date__month']:02d}",
+#                 "avg_price": entry["avg_price"],
+#                 "avg_open": entry["avg_open"],
+#                 "avg_high": entry["avg_high"],
+#                 "avg_low": entry["avg_low"],
+#                 "avg_percent": entry["avg_percent"],
+#                 "avg_diff": entry["avg_diff"],
+#                 "min_price": entry["min_price"],
+#                 "max_price": entry["max_price"],
+#             }
+#             for entry in queryset
+#         ]
+
+#     else:
+#         return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
+
+#     return JsonResponse({"data": data, "count": len(data)})
