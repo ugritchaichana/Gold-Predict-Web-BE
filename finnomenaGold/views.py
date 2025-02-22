@@ -140,6 +140,11 @@ def delete_all_gold_data(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+import logging
+
+# ตั้งค่า logging
+logging.basicConfig(level=logging.DEBUG)
+
 def get_gold_data(request):
     db_choice = request.GET.get('db_choice', None)
     if db_choice is None:
@@ -158,7 +163,7 @@ def get_gold_data(request):
     end_param = request.GET.get('end', None)
     group_by = request.GET.get('group_by', 'daily')
 
-    cache_time = 3600
+    cache_time = 3600  # Cache time in seconds (1 hour)
     cache_param = request.GET.get('cache', 'True').lower()
 
     if cache_param == 'false':
@@ -202,38 +207,48 @@ def get_gold_data(request):
         cache_key = f"gold_data:{db_choice}:{frame}:{start_timeframe}:{end_timeframe}:{group_by}"
         count_cache_key = f"gold_data_count:{db_choice}:{group_by}"
 
+        # Start with PostgreSQL as default
+        cache_used = "PostgreSQL" if use_cache else "None"
+    
         if use_cache:
+            logging.debug(f"Checking cache for key: {cache_key}")
             cached_data = cache.get(cache_key)
             if cached_data:
-                print(f"✅ Checking cached data for key: {cache_key}")
                 cached_params = cached_data.get('params', {})
-
                 if cached_params == {'start': start_timeframe, 'end': end_timeframe, 'frame': frame, 'group_by': group_by}:
-                    print(f"✅ Using cached data for key: {cache_key}")
                     data = cached_data["data"]
-
+                    logging.debug(f"Cache hit for key: {cache_key}")
+                    # Set cache_used to Redis if we hit Redis cache
+                    cache_used = "Redis"
                     if group_by == "monthly":
                         data = [entry for entry in data if (start_timeframe is None or entry["period"] >= f"{start_timeframe.year}-{start_timeframe.month:02d}") and (end_timeframe is None or entry["period"] <= f"{end_timeframe.year}-{end_timeframe.month:02d}")]
-
                     elif group_by == "daily":
                         data = [entry for entry in data if (start_timeframe is None or entry["created_at"].date() >= start_timeframe) and (end_timeframe is None or entry["created_at"].date() <= end_timeframe)]
 
-                    return JsonResponse({"data": data, "count": len(data)}, status=200)
+                    return JsonResponse({
+                        "cache_used": cache_used,
+                        "cache": cache_key,
+                        "count": len(data),
+                        "data": data
+                    }, status=200)
+                else:
+                    logging.debug(f"Cache miss for key: {cache_key}, params do not match.")
+            else:
+                logging.debug(f"Cache miss for key: {cache_key}, no data found.")
 
+        # Query the database if data is not in cache
         current_record_count = table_model.objects.count()
         latest_record = table_model.objects.aggregate(last_updated=Max("created_at"))
 
         cached_count_data = cache.get(count_cache_key)
         if cached_count_data:
-            if isinstance(cached_count_data, tuple) and len(cached_count_data) == 2:
-                cached_count, cached_latest = cached_count_data
-                if cached_count == current_record_count and cached_latest == latest_record["last_updated"]:
-                    print(f"✅ Cache is valid, but missing data - refetching complete data")
-                else:
-                    cache.delete(cache_key)
-                    print(f"❌ Invalid cache, deleting old data for key: {cache_key}")
+            cached_count, cached_latest = cached_count_data
+            if cached_count == current_record_count and cached_latest == latest_record["last_updated"]:
+                logging.debug("Cache count and latest record are up-to-date. No need to refresh cache.")
+            else:
+                logging.debug("Cache is outdated, deleting existing cache.")
+                cache.delete(cache_key)
 
-        print(f"⏳ Querying database for key: {cache_key}")
         queryset = table_model.objects.all()
 
         if start_timeframe:
@@ -264,12 +279,18 @@ def get_gold_data(request):
         else:
             return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
 
+        # Save new data to cache
         if use_cache:
+            logging.debug(f"Saving new data to cache with key: {cache_key}")
             cache.set(count_cache_key, (current_record_count, latest_record["last_updated"]), timeout=cache_time)
             cache.set(cache_key, {"data": data, "count": len(data), "params": {'start': start_timeframe, 'end': end_timeframe, 'frame': frame, 'group_by': group_by}}, timeout=cache_time)
-            print(f"💾 Cached data for key: {cache_key}")
 
-        return JsonResponse({"data": data, "count": len(data)})
+        return JsonResponse({
+            "cache_used": cache_used,
+            "cache": cache_key,
+            "count": len(data),
+            "data": data
+        })
 
     except ValueError:
         return JsonResponse({"error": "Invalid date format. Use 'dd-mm-yyyy'."}, status=400)
