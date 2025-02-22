@@ -8,6 +8,7 @@ from rest_framework import status
 from .models import USDTHB, CNYTHB
 from .serializers import USDTHBSerializer, CNYTHBSerializer
 from datetime import datetime, timedelta
+from datetime import date as DateType
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 import json
@@ -209,6 +210,12 @@ def add_usdthb_data(request):
     return JsonResponse({"message": "Only POST method is allowed"}, status=405)
 
 
+def serialize_data(data):
+    for entry in data:
+        if "date" in entry and isinstance(entry["date"], DateType):
+            entry["date"] = entry["date"].isoformat()
+    return data
+
 def get_currency_data(request):
     frame = request.GET.get('frame', None)
     start_date = request.GET.get('start', None)
@@ -257,17 +264,18 @@ def get_currency_data(request):
     logger.info(f"Generated cache key: {cache_key}")
 
     # Check Cache first
-    cache_status = "None"  # Default status when no cache is hit
+    cache_status = "None"
     if use_cache:
         cached_data = cache.get(cache_key)
         if cached_data:
-            logger.info(f"Using cached data for key: {cache_key}")
-            cache_status = cache_key  # Cache hit, use the key
-            return JsonResponse({"data": cached_data["data"], "count": len(cached_data["data"]), "cache": cache_status}, status=200)
-        else:
-            logger.info(f"Cache miss for key: {cache_key}")
-    
-    # If cache miss, proceed with querying the database
+            try:
+                cached_data = json.loads(cached_data)
+                logger.info(f"Using cached data for key: {cache_key}")
+                cache_status = cache_key
+                return JsonResponse({"data": cached_data["data"], "count": len(cached_data["data"]), "cache": cache_status}, status=200)
+            except json.JSONDecodeError:
+                logger.warning(f"Cache data corrupted for key: {cache_key}, ignoring cache.")
+
     queryset = USDTHB.objects.all()
 
     if start_date:
@@ -280,7 +288,6 @@ def get_currency_data(request):
         if latest_entry:
             queryset = USDTHB.objects.filter(date=latest_entry.date)
 
-    # Grouping Logic
     if group_by == "daily":
         queryset = queryset.order_by('date')
         data = list(queryset.values())
@@ -315,15 +322,14 @@ def get_currency_data(request):
     else:
         return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
 
-    # Store the result in cache if not using cache or cache miss
+    # Store the result in cache
     if use_cache:
-        cache.set(cache_key, {"data": data}, timeout=cache_time)
+        # แปลง Python Object เป็น JSON String ก่อนเก็บเข้า Redis
+        cache.set(cache_key, json.dumps({"data": serialize_data(data)}), timeout=cache_time)
         logger.info(f"Cached data for key: {cache_key}")
         cache_status = cache_key  # Set cache key after caching data
 
-    return JsonResponse({"data": data, "count": len(data), "cache": cache_status})
-
-
+    return JsonResponse({"cache": cache_status, "count": len(data), "data": serialize_data(data)})
 
 
 # def get_currency_data(request):
