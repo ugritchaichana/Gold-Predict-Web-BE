@@ -2,6 +2,7 @@ from decouple import config
 import os
 from google.oauth2 import service_account
 from pathlib import Path
+import logging
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -47,12 +48,50 @@ else:
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
+        # 'LOCATION': 'redis://127.0.0.1:6379/1',
         "LOCATION": f"redis://{REDIS_HOST}:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     }
 }
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'INFO',  # ใช้ 'DEBUG' เพื่อแสดงรายละเอียดมากขึ้น
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',  # ใช้ 'DEBUG' เพื่อแสดง log ที่ละเอียด
+            'propagate': True,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # เพิ่ม Logger สำหรับแอปพลิเคชันของคุณ (เช่น 'currency', 'gold', ฯลฯ)
+        'currency': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # เปลี่ยนเป็น 'DEBUG' หากต้องการ log รายละเอียดมากขึ้น
+            'propagate': True,
+        },
+    },
+}
+
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

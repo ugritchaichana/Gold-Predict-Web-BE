@@ -13,6 +13,9 @@ from django.db.models import Q
 import json
 from django.http import JsonResponse
 from django.core.cache import cache
+import logging
+logger = logging.getLogger(__name__)
+
 
 class CurrencyDataCreateView(APIView):
     def post(self, request, format=None):
@@ -205,6 +208,7 @@ def add_usdthb_data(request):
 
     return JsonResponse({"message": "Only POST method is allowed"}, status=405)
 
+
 def get_currency_data(request):
     frame = request.GET.get('frame', None)
     start_date = request.GET.get('start', None)
@@ -250,14 +254,20 @@ def get_currency_data(request):
 
     # Cache key
     cache_key = f"currency_data:{start_date}:{end_date}:{frame}:{group_by}"
+    logger.info(f"Generated cache key: {cache_key}")
 
     # Check Cache first
+    cache_status = "None"  # Default status when no cache is hit
     if use_cache:
         cached_data = cache.get(cache_key)
         if cached_data:
-            print(f"✅ Using cached data for key: {cache_key}")
-            return JsonResponse({"data": cached_data["data"], "count": len(cached_data["data"])}, status=200)
-
+            logger.info(f"Using cached data for key: {cache_key}")
+            cache_status = cache_key  # Cache hit, use the key
+            return JsonResponse({"data": cached_data["data"], "count": len(cached_data["data"]), "cache": cache_status}, status=200)
+        else:
+            logger.info(f"Cache miss for key: {cache_key}")
+    
+    # If cache miss, proceed with querying the database
     queryset = USDTHB.objects.all()
 
     if start_date:
@@ -270,7 +280,7 @@ def get_currency_data(request):
         if latest_entry:
             queryset = USDTHB.objects.filter(date=latest_entry.date)
 
-    # 🟢 Grouping Logic
+    # Grouping Logic
     if group_by == "daily":
         queryset = queryset.order_by('date')
         data = list(queryset.values())
@@ -305,12 +315,14 @@ def get_currency_data(request):
     else:
         return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
 
-    # Store the result in cache
+    # Store the result in cache if not using cache or cache miss
     if use_cache:
         cache.set(cache_key, {"data": data}, timeout=cache_time)
-        print(f"💾 Cached data for key: {cache_key}")
+        logger.info(f"Cached data for key: {cache_key}")
+        cache_status = cache_key  # Set cache key after caching data
 
-    return JsonResponse({"data": data, "count": len(data)})
+    return JsonResponse({"data": data, "count": len(data), "cache": cache_status})
+
 
 
 
