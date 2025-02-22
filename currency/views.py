@@ -212,8 +212,8 @@ def add_usdthb_data(request):
 
 def serialize_data(data):
     for entry in data:
-        if "date" in entry and isinstance(entry["date"], DateType):
-            entry["date"] = entry["date"].isoformat()
+        if "date" in entry and isinstance(entry["date"], date):  # ใช้ datetime.date แทน DateType
+            entry["date"] = entry["date"].isoformat()  # แปลงเป็น string ในรูปแบบ ISO
     return data
 
 def get_currency_data(request):
@@ -268,13 +268,10 @@ def get_currency_data(request):
     if use_cache:
         cached_data = cache.get(cache_key)
         if cached_data:
-            try:
-                cached_data = json.loads(cached_data)
-                logger.info(f"Using cached data for key: {cache_key}")
-                cache_status = cache_key
-                return JsonResponse({"data": cached_data["data"], "count": len(cached_data["data"]), "cache": cache_status}, status=200)
-            except json.JSONDecodeError:
-                logger.warning(f"Cache data corrupted for key: {cache_key}, ignoring cache.")
+            logger.info(f"Using cached data for key: {cache_key}")
+            cache_status = cache_key
+            # ไม่ต้องใช้ json.loads() เพราะ cached_data ควรเป็น dict อยู่แล้ว
+            return JsonResponse({"data": cached_data["data"], "count": len(cached_data["data"]), "cache": cache_status}, status=200)
 
     queryset = USDTHB.objects.all()
 
@@ -330,7 +327,6 @@ def get_currency_data(request):
         cache_status = cache_key  # Set cache key after caching data
 
     return JsonResponse({"cache": cache_status, "count": len(data), "data": serialize_data(data)})
-
 
 # def get_currency_data(request):
 #     frame = request.GET.get('frame', None)
