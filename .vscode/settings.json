@@ -10,5 +10,6 @@
             "username": "postgres",
             "password": "password"
         }
-    ]
+    ],
+    "python.pythonPath": "c:\\Users\\Ugrit\\Documents\\GitHub\\Gold-Predict-Web-BE\\.venv\\Scripts\\python.exe"
 }

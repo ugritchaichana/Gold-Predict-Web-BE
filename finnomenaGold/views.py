@@ -253,7 +253,14 @@ def get_gold_data(request):
 
         if start_timeframe:
             queryset = queryset.filter(created_at__date__gte=start_timeframe)
-        queryset = queryset.filter(created_at__date__lte=end_timeframe)
+        if queryset.filter(created_at__date__lte=end_timeframe).exists():
+            queryset = queryset.filter(created_at__date__lte=end_timeframe)
+        else:
+            # If no records are found for the exact end_timeframe, find the closest date
+            closest_date = table_model.objects.filter(created_at__date__lt=end_timeframe).order_by('-created_at__date').first()
+            if closest_date:
+                end_timeframe = closest_date.created_at.date()
+                queryset = queryset.filter(created_at__date__lte=end_timeframe)
 
         if group_by == "daily":
             queryset = queryset.order_by('created_at')

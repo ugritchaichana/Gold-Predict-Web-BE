@@ -258,7 +258,7 @@ def get_currency_data(request):
             start_date = None
         else:
             return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
-
+        
     # Cache key
     cache_key = f"currency_data:{start_date}:{end_date}:{frame}:{group_by}"
     logger.info(f"Generated cache key: {cache_key}")
