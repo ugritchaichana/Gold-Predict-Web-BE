@@ -74,50 +74,68 @@ class CurrencyDataCreateView(APIView):
 
 class CurrencyDataUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
+    logger = logging.getLogger(__name__)
 
     def post(self, request, format=None):
-        file = request.FILES['file']
-        currency = request.data.get('currency')
-
-        if currency not in ['usd', 'cny']:
-            return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
-
-        df = pd.read_csv(file)
-        df = df.drop(columns=['ปริมาณ'], errors='ignore')
-        df.columns = ['Date', 'Price', 'Open', 'High', 'Low', 'Percent']
+        self.logger.info("Received a POST request to upload currency data.")
         
-        df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
-        df['Percent'] = pd.to_numeric(df['Percent'].str.replace('%', '', regex=True), errors='coerce')
+        try:
+            file = request.FILES['file']
+            currency = request.data.get('currency')
+            self.logger.info(f"File received: {file.name}, Currency: {currency}")
 
-        full_dates = pd.date_range(start=df['Date'].min(), end=df['Date'].max(), freq='D')
-        df = df.set_index('Date').reindex(full_dates).reset_index()
-        df.rename(columns={'index': 'Date'}, inplace=True)
+            if currency not in ['usd', 'cny']:
+                self.logger.error("Invalid currency type received.")
+                return Response({"error": "Invalid currency type."}, status=status.HTTP_400_BAD_REQUEST)
 
-        df[['Price', 'Open', 'High', 'Low']] = df[['Price', 'Open', 'High', 'Low']].interpolate(method='linear')
-        df['Percent'] = df['Price'].pct_change() * 100
-        df['Percent'] = df['Percent'].fillna(0)
-        df['Diff'] = df['Price'].diff().fillna(0)
+            df = pd.read_csv(file)
+            self.logger.info("CSV file read successfully.")
+            self.logger.info(f"Data preview:\n{df.head()}")  # Display the first few rows of the dataframe
 
-        df = df.round({'Price': 4, 'Open': 4, 'High': 4, 'Low': 4, 'Percent': 4, 'Diff': 4})
+            df = df.drop(columns=['ปริมาณ'], errors='ignore')
+            df.columns = ['Date', 'Price', 'Open', 'High', 'Low', 'Percent']
+            self.logger.info("Data columns renamed and unnecessary columns dropped.")
 
-        objects_to_create = []
-        model = USDTHB if currency.lower() == 'usd' else CNYTHB
+            df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
+            df['Percent'] = pd.to_numeric(df['Percent'].str.replace('%', '', regex=True), errors='coerce')
+            self.logger.info("Date and Percent columns processed.")
 
-        for _, row in df.iterrows():
-            objects_to_create.append(model(
-                date=row['Date'],
-                price=row['Price'],
-                open=row['Open'],
-                high=row['High'],
-                low=row['Low'],
-                percent=row['Percent'],
-                diff=row['Diff']
-            ))
+            full_dates = pd.date_range(start=df['Date'].min(), end=df['Date'].max(), freq='D')
+            df = df.set_index('Date').reindex(full_dates).reset_index()
+            df.rename(columns={'index': 'Date'}, inplace=True)
+            self.logger.info("Missing dates filled.")
 
-        model.objects.bulk_create(objects_to_create)
+            df[['Price', 'Open', 'High', 'Low']] = df[['Price', 'Open', 'High', 'Low']].interpolate(method='linear')
+            df['Percent'] = df['Price'].pct_change() * 100
+            df['Percent'] = df['Percent'].fillna(0)
+            df['Diff'] = df['Price'].diff().fillna(0)
+            self.logger.info("Data interpolation and calculations completed.")
 
-        return Response({"message": f"Data uploaded and saved to {model.__name__.lower()} successfully."},
-                        status=status.HTTP_201_CREATED)
+            df = df.round({'Price': 4, 'Open': 4, 'High': 4, 'Low': 4, 'Percent': 4, 'Diff': 4})
+            self.logger.info("Data rounded to 4 decimal places.")
+
+            objects_to_create = []
+            model = USDTHB if currency.lower() == 'usd' else CNYTHB
+
+            for _, row in df.iterrows():
+                objects_to_create.append(model(
+                    date=row['Date'],
+                    price=row['Price'],
+                    open=row['Open'],
+                    high=row['High'],
+                    low=row['Low'],
+                    percent=row['Percent'],
+                    diff=row['Diff']
+                ))
+
+            model.objects.bulk_create(objects_to_create)
+            self.logger.info(f"Data uploaded and saved to {model.__name__.lower()} successfully.")
+
+            return Response({"message": f"Data uploaded and saved to {model.__name__.lower()} successfully."},
+                            status=status.HTTP_201_CREATED)
+        except Exception as e:
+            self.logger.error(f"An error occurred: {str(e)}")
+            return Response({"error": "An error occurred during the upload process."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CurrencyDataDeleteView(APIView):
 

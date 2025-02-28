@@ -6,7 +6,9 @@ from datetime import datetime, timezone, timedelta
 from django.db.models import Avg, Min, Max
 from django.db import transaction
 from django.core.cache import cache
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
 currentDateTime = datetime.now().strftime('%Y-%m-%d')
 
 def fetch_gold_data(request):
@@ -32,7 +34,8 @@ def fetch_gold_data(request):
         return JsonResponse({"error": "Invalid 'db_choice' parameter value."}, status=400)
 
 def fetch_gold_th_data(request):
-    url = "https://www.finnomena.com/fn3/api/gold/trader/history/graph?period=MAX&sampling=0&startTimeframe="
+    # url = "https://www.finnomena.com/fn3/api/gold/trader/history/graph?period=MAX&sampling=0&startTimeframe="
+    url = "https://www.finnomena.com/fn3/api/gold/trader/history/graph?period=5D&sampling=0&startTimeframe="
 
     contry_table = apps.get_model('finnomenaGold', 'Gold_TH')
 
@@ -139,11 +142,6 @@ def delete_all_gold_data(request):
         return JsonResponse({"error": f"Model '{contry_table_name}' does not exist in app 'finnomenaGold'."}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
-import logging
-
-# ตั้งค่า logging
-logging.basicConfig(level=logging.DEBUG)
 
 def get_gold_data(request):
     db_choice = request.GET.get('db_choice', None)
