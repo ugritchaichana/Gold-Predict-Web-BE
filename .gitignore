@@ -171,3 +171,5 @@ goldpridictweb.json
 *.csr
 *.key
 certificate
+*.pem
+ssl.conf
