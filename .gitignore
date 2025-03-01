@@ -170,3 +170,4 @@ goldpridictweb.json
 # Ignore Certificate Signing Requests and Private Keys
 *.csr
 *.key
+certificate

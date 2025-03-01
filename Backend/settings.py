@@ -21,11 +21,16 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = True
 # DEBUG = config('DEBUG', default=False, cast=bool)
 
+# อนุญาตให้ทุก host สามารถเข้าถึงได้
 ALLOWED_HOSTS = ['*']
+
+# HTTPS settings for Cloud Load Balancer
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -62,7 +67,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
-            'level': 'INFO',  # ใช้ 'DEBUG' เพื่อแสดงรายละเอียดมากขึ้น
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
         },
         'file': {
@@ -74,7 +79,7 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'INFO',  # ใช้ 'DEBUG' เพื่อแสดง log ที่ละเอียด
+            'level': 'INFO',
             'propagate': True,
         },
         'django.db.backends': {
@@ -82,22 +87,21 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        # เพิ่ม Logger สำหรับแอปพลิเคชันของคุณ (เช่น 'currency', 'gold', ฯลฯ)
         'currency': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',  # เปลี่ยนเป็น 'DEBUG' หากต้องการ log รายละเอียดมากขึ้น
+            'level': 'DEBUG',
             'propagate': True,
         },
     },
 }
 
-
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-CORS_ALLOW_ALL_ORIGINS = True
+# ตั้งค่า CORS ให้ทุกเครื่องสามารถเรียกใช้ API ได้
+CORS_ALLOW_ALL_ORIGINS = True  # อนุญาตการเข้าถึงจากทุกที่
 
+# อนุญาตทุก method
 CORS_ALLOW_METHODS = [
     "GET",
     "POST",
@@ -107,17 +111,28 @@ CORS_ALLOW_METHODS = [
     "OPTIONS",
 ]
 
+# อนุญาต header ที่จำเป็น
 CORS_ALLOW_HEADERS = [
-    "content-type",
+    "accept",
+    "accept-encoding",
     "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
     "x-csrftoken",
+    "x-requested-with",
 ]
 
+# Explicitly allow credentials (cookies, authorization headers, etc)
+CORS_ALLOW_CREDENTIALS = True
+
+# เปลี่ยนลำดับ middleware ให้ corsheaders อยู่ด้านบน
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # ต้องอยู่ตำแหน่งแรก
     'django.middleware.security.SecurityMiddleware',
     # 'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
     # 'django.contrib.auth.middleware.AuthenticationMiddleware',
     # 'django.contrib.messages.middleware.MessageMiddleware',
