@@ -7,6 +7,7 @@ from django.db.models import Avg, Min, Max
 from django.db import transaction
 from django.core.cache import cache
 import logging
+import decimal
 
 logging.basicConfig(level=logging.DEBUG)
 currentDateTime = datetime.now().strftime('%Y-%m-%d')
@@ -412,13 +413,88 @@ def create_gold_data(request):
         
         if bulk_data:
             with transaction.atomic():
-                contry_table.objects.bulk_create(bulk_data, batch_size=5000)
+                created_records = contry_table.objects.bulk_create(bulk_data, batch_size=5000)
             
-            return JsonResponse({"message": f"Data created successfully. {len(bulk_data)} new records added."})
+            # Get IDs of created records
+            created_ids = [record.id for record in created_records]
+            
+            return JsonResponse({
+                "status": "success",
+                "message": f"Data created successfully. {len(bulk_data)} new records added.",
+                "ids": created_ids
+            })
         else:
-            return JsonResponse({"message": "No data was created."})
+            return JsonResponse({
+                "status": "warning",
+                "message": "No data was created."
+            })
             
     except LookupError:
         return JsonResponse({"error": f"Model '{table_name}' does not exist in app 'finnomenaGold'."}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+def get_gold_by_id(request, id=None):
+    """
+    Retrieves gold data by specific ID.
+    URL parameters:
+    - db_choice: '0' for Gold_TH, '1' for Gold_US
+    - id: The ID of the record to retrieve (can also be passed in the URL path)
+    """
+    db_choice = request.GET.get('db_choice')
+    
+    # Allow ID to be passed either in URL path or as a query parameter
+    record_id = id or request.GET.get('id')
+    
+    if not db_choice:
+        return JsonResponse({"status": "error", "message": "Missing 'db_choice' parameter."}, status=400)
+    
+    if not record_id:
+        return JsonResponse({"status": "error", "message": "Missing 'id' parameter."}, status=400)
+    
+    table_mapping = {'0': 'Gold_TH', '1': 'Gold_US'}
+    table_name = table_mapping.get(db_choice)
+    
+    if not table_name:
+        return JsonResponse({"status": "error", "message": "Invalid 'db_choice' parameter value. Must be 0 or 1."}, status=400)
+    
+    try:
+        # Ensure record_id is a valid integer
+        try:
+            record_id = int(record_id)
+        except ValueError:
+            return JsonResponse({"status": "error", "message": f"Invalid ID format: '{record_id}'. ID must be an integer."}, status=400)
+        
+        contry_table = apps.get_model('finnomenaGold', table_name)
+        record = contry_table.objects.filter(id=record_id).first()
+        
+        if not record:
+            return JsonResponse({
+                "status": "error",
+                "message": f"No record found with ID {record_id} in {table_name}."
+            }, status=404)
+        
+        # Convert model instance to dictionary
+        data = {}
+        for field in record._meta.fields:
+            field_name = field.name
+            field_value = getattr(record, field_name)
+            
+            # Convert datetime objects to string format
+            if isinstance(field_value, datetime):
+                field_value = field_value.strftime('%Y-%m-%dT%H:%M:%SZ')
+            # Convert Decimal objects to float for JSON serialization
+            elif isinstance(field_value, decimal.Decimal):
+                field_value = float(field_value)
+                
+            data[field_name] = field_value
+        
+        return JsonResponse({
+            "status": "success",
+            "data": data
+        })
+        
+    except LookupError:
+        return JsonResponse({"status": "error", "message": f"Model '{table_name}' does not exist in app 'finnomenaGold'."}, status=400)
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
