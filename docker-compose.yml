@@ -22,7 +22,7 @@ services:
       REDIS_PORT: "6379"
       IS_DOCKER_ENV: "true"
     volumes:
-      - ./goldpridictweb-7c91aab7d8df.json:/app/${GCS_SERVICE_ACCOUNT_KEY}
+      - ./goldpridictweb.json:/app/${GCS_SERVICE_ACCOUNT_KEY}
     depends_on:
       - redis
     command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
