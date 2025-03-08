@@ -418,10 +418,30 @@ def create_gold_data(request):
             # Get IDs of created records
             created_ids = [record.id for record in created_records]
             
+            # Fetch the created data for verification
+            created_data = []
+            for record in created_records:
+                record_dict = {}
+                for field in record._meta.fields:
+                    field_name = field.name
+                    field_value = getattr(record, field_name)
+                    
+                    # Convert datetime objects to string format
+                    if isinstance(field_value, datetime):
+                        field_value = field_value.strftime('%Y-%m-%dT%H:%M:%SZ')
+                    # Convert Decimal objects to float for JSON serialization
+                    elif isinstance(field_value, decimal.Decimal):
+                        field_value = float(field_value)
+                        
+                    record_dict[field_name] = field_value
+                
+                created_data.append(record_dict)
+            
             return JsonResponse({
                 "status": "success",
                 "message": f"Data created successfully. {len(bulk_data)} new records added.",
-                "ids": created_ids
+                "ids": created_ids,
+                "created_records": created_data
             })
         else:
             return JsonResponse({
