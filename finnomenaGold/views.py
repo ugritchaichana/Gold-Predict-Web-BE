@@ -303,3 +303,122 @@ def get_gold_data(request):
         return JsonResponse({"error": f"Model '{table_name}' does not exist in app 'finnomenaGold'."}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+def create_gold_data(request):
+    """
+    Creates new gold data entries from POST request data.
+    Expects JSON body with:
+    - db_choice: '0' for Gold_TH, '1' for Gold_US
+    - data: list of objects with model fields
+    """
+    if request.method != 'POST':
+        return JsonResponse({"error": "Only POST method is allowed."}, status=405)
+    
+    try:
+        import json
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON body."}, status=400)
+    
+    db_choice = data.get('db_choice')
+    if not db_choice:
+        return JsonResponse({"error": "Missing 'db_choice' parameter."}, status=400)
+    
+    table_mapping = {'0': 'Gold_TH', '1': 'Gold_US'}
+    table_name = table_mapping.get(db_choice)
+    
+    if not table_name:
+        return JsonResponse({"error": "Invalid 'db_choice' parameter value. Must be 0 or 1."}, status=400)
+    
+    records = data.get('data', [])
+    if not records or not isinstance(records, list):
+        return JsonResponse({"error": "Missing or invalid 'data' parameter. Must be a list of records."}, status=400)
+    
+    try:
+        contry_table = apps.get_model('finnomenaGold', table_name)
+        bulk_data = []
+        
+        for record in records:
+            if db_choice == '0':  # Gold_TH
+                # Convert string datetime to datetime object if provided
+                created_at = record.get('created_at')
+                if isinstance(created_at, str):
+                    try:
+                        created_at = datetime.strptime(created_at, '%Y-%m-%dT%H:%M:%SZ')
+                    except ValueError:
+                        return JsonResponse({"error": f"Invalid datetime format in record. Use 'YYYY-MM-DDTHH:MM:SSZ'."}, status=400)
+                elif not created_at:
+                    created_at = datetime.now()
+                
+                # Set timestamp if not provided
+                timestamp = record.get('timestamp')
+                if not timestamp:
+                    timestamp = int(created_at.timestamp() * 1000)
+                
+                # Set date if not provided
+                date = record.get('date')
+                if not date:
+                    date = created_at.strftime('%d-%m-%y')
+                
+                bulk_data.append(
+                    contry_table(
+                        timestamp=timestamp,
+                        created_at=created_at,
+                        created_time=record.get('created_time'),
+                        price=record.get('price'),
+                        bar_sell_price=record.get('bar_sell_price'),
+                        bar_price_change=record.get('bar_price_change'),
+                        ornament_buy_price=record.get('ornament_buy_price'),
+                        ornament_sell_price=record.get('ornament_sell_price'),
+                        date=date
+                    )
+                )
+                
+            elif db_choice == '1':  # Gold_US
+                # Convert string datetime to datetime object if provided
+                created_at = record.get('created_at')
+                if isinstance(created_at, str):
+                    try:
+                        created_at = datetime.strptime(created_at, '%Y-%m-%dT%H:%M:%SZ')
+                    except ValueError:
+                        return JsonResponse({"error": f"Invalid datetime format in record. Use 'YYYY-MM-DDTHH:MM:SSZ'."}, status=400)
+                elif not created_at:
+                    created_at = datetime.now()
+                
+                # Set timestamp if not provided
+                timestamp = record.get('timestamp')
+                if not timestamp:
+                    timestamp = int(created_at.timestamp() * 1000)
+                
+                # Set date if not provided
+                date = record.get('date')
+                if not date:
+                    date = created_at.strftime('%d-%m-%y')
+                
+                bulk_data.append(
+                    contry_table(
+                        timestamp=timestamp,
+                        price=record.get('price'),
+                        close_price=record.get('close_price'),
+                        high_price=record.get('high_price'),
+                        low_price=record.get('low_price'),
+                        volume=record.get('volume'),
+                        volume_weight_avg=record.get('volume_weight_avg'),
+                        num_transactions=record.get('num_transactions'),
+                        date=date,
+                        created_at=created_at
+                    )
+                )
+        
+        if bulk_data:
+            with transaction.atomic():
+                contry_table.objects.bulk_create(bulk_data, batch_size=5000)
+            
+            return JsonResponse({"message": f"Data created successfully. {len(bulk_data)} new records added."})
+        else:
+            return JsonResponse({"message": "No data was created."})
+            
+    except LookupError:
+        return JsonResponse({"error": f"Model '{table_name}' does not exist in app 'finnomenaGold'."}, status=400)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
