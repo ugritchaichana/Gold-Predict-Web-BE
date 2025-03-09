@@ -144,146 +144,6 @@ def delete_all_gold_data(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-def get_gold_data(request):
-    logging.debug("Entering get_gold_data function")
-    db_choice = request.GET.get('db_choice', None)
-    if (db_choice is None):
-        logging.debug("Missing 'db_choice' parameter.")
-        return JsonResponse({"error": "Missing 'db_choice' parameter."}, status=400)
-
-    table_mapping = {'0': 'Gold_TH', '1': 'Gold_US'}
-    table_name = table_mapping.get(db_choice)
-    if not table_name:
-        logging.debug("Invalid 'db_choice' parameter value.")
-        return JsonResponse({"error": "Invalid 'db_choice' parameter value. Must be 0 or 1."}, status=400)
-
-    end_timeframe = datetime.now(timezone.utc).date()
-    start_timeframe = None
-
-    frame = request.GET.get('frame', None)
-    start_param = request.GET.get('start', None)
-    end_param = request.GET.get('end', None)
-    group_by = request.GET.get('group_by', 'daily')
-
-    try:
-        if start_param:
-            start_timeframe = datetime.strptime(start_param, "%d-%m-%Y").date()
-        if end_param:
-            end_timeframe = datetime.strptime(end_param, "%d-%m-%Y").date()
-
-        if start_timeframe and end_timeframe and start_timeframe > end_timeframe:
-            logging.debug("'start' date cannot be after 'end' date.")
-            return JsonResponse({"error": "'start' date cannot be after 'end' date."}, status=400)
-
-        show_latest_only = False
-
-        if not start_timeframe and frame:
-            logging.debug(f"Frame parameter provided: {frame}")
-            if frame == "1d":
-                show_latest_only = True
-                start_timeframe = end_timeframe
-            elif frame == "7d":
-                start_timeframe = end_timeframe - timedelta(days=6)
-            elif frame == "15d":
-                start_timeframe = end_timeframe - timedelta(days=14)
-            elif frame == "1m":
-                start_timeframe = (end_timeframe - timedelta(days=30)).replace(day=1)
-            elif frame == "3m":
-                start_timeframe = (end_timeframe - timedelta(days=90)).replace(day=1)
-            elif frame == "6m":
-                start_timeframe = (end_timeframe - timedelta(days=180)).replace(day=1)
-            elif frame == "1y":
-                start_timeframe = end_timeframe.replace(year=end_timeframe.year - 1)
-            elif frame == "3y":
-                start_timeframe = end_timeframe.replace(year=end_timeframe.year - 3)
-            elif frame == "all":
-                start_timeframe = None
-            else:
-                logging.debug("Invalid 'frame' parameter.")
-                return JsonResponse({"status": "error", "message": "Invalid 'frame' parameter."}, status=400)
-
-        table_model = apps.get_model('finnomenaGold', table_name)
-
-        queryset = table_model.objects.all()
-
-        if frame == "1d" and show_latest_only:
-            logging.debug("Frame is 1d and show_latest_only is True")
-            latest_record = queryset.order_by('-created_at').first()
-            if latest_record:
-                start_timeframe = latest_record.created_at.date()
-                end_timeframe = latest_record.created_at.date()
-                queryset = queryset.filter(created_at__date=start_timeframe)
-            else:
-                logging.debug("No data available")
-                queryset = queryset.none()
-
-            if not queryset.exists():
-                logging.debug("No data found for 1d, fetching data for 7d")
-                start_timeframe = end_timeframe - timedelta(days=6)
-                queryset = table_model.objects.filter(created_at__date__gte=start_timeframe, created_at__date__lte=end_timeframe).order_by('-created_at')
-                if queryset.exists():
-                    latest_record = queryset.first()
-                    queryset = queryset.filter(id=latest_record.id)
-                else:
-                    logging.debug("No data available for 7d either")
-                    queryset = queryset.none()
-        else:
-            if start_timeframe:
-                queryset = queryset.filter(created_at__date__gte=start_timeframe)
-            if end_timeframe and queryset.filter(created_at__date__lte=end_timeframe).exists():
-                queryset = queryset.filter(created_at__date__lte=end_timeframe)
-            elif end_timeframe:
-                closest_date = table_model.objects.filter(created_at__date__lt=end_timeframe).order_by('-created_at').first()
-                if closest_date:
-                    end_timeframe = closest_date.created_at.date()
-                    queryset = queryset.filter(created_at__date__lte=end_timeframe)
-
-        logging.debug(f"Start timeframe: {start_timeframe}, End timeframe: {end_timeframe}")
-        logging.debug(f"Queryset count before grouping: {queryset.count()}")
-
-        if group_by == "daily":
-            queryset = queryset.order_by('created_at')
-            data = list(queryset.values())
-
-        elif group_by == "monthly":
-            queryset = queryset.values("created_at__year", "created_at__month").annotate(
-                avg_price=Avg("price"),
-                min_price=Min("price"),
-                max_price=Max("price")
-            ).order_by("created_at__year", "created_at__month")
-
-            data = [
-                {
-                    "period": f"{entry['created_at__year']}-{entry['created_at__month']:02d}",
-                    "avg_price": entry["avg_price"],
-                    "min_price": entry["min_price"],
-                    "max_price": entry["max_price"]
-                }
-                for entry in queryset
-            ]
-
-        else:
-            logging.debug("Invalid 'group_by' parameter.")
-            return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
-
-        logging.debug(f"Data count: {len(data)}")
-        logging.debug(f"Data: {data}")
-
-        return JsonResponse({
-            "count": len(data),
-            "data": data
-        })
-
-    except ValueError:
-        logging.debug("Invalid date format.")
-        return JsonResponse({"error": "Invalid date format. Use 'dd-mm-yyyy'."}, status=400)
-    except LookupError:
-        logging.debug(f"Model '{table_name}' does not exist in app 'finnomenaGold'.")
-        return JsonResponse({"error": f"Model '{table_name}' does not exist in app 'finnomenaGold'."}, status=400)
-    except Exception as e:
-        logging.debug(f"Exception occurred: {str(e)}")
-        return JsonResponse({"error": str(e)}, status=500)
-
 def create_gold_data(request):
     """
     Creates new gold data entries from POST request data.
@@ -460,6 +320,12 @@ def get_gold_by_id(request, id=None):
         except ValueError:
             return JsonResponse({"status": "error", "message": f"Invalid ID format: '{record_id}'. ID must be an integer."}, status=400)
         
+        cache_key = f"gold_data:{db_choice}:{record_id}"
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            logging.debug(f"Cache hit for key: {cache_key}")
+            return JsonResponse({"status": "success", "data": cached_data})
+        
         contry_table = apps.get_model('finnomenaGold', table_name)
         record = contry_table.objects.filter(id=record_id).first()
         
@@ -484,6 +350,9 @@ def get_gold_by_id(request, id=None):
                 
             data[field_name] = field_value
         
+        cache.set(cache_key, data, timeout=120)  # Cache for 2 minutes
+        logging.debug(f"Cache set for key: {cache_key}")
+        
         return JsonResponse({
             "status": "success",
             "data": data
@@ -493,3 +362,161 @@ def get_gold_by_id(request, id=None):
         return JsonResponse({"status": "error", "message": f"Model '{table_name}' does not exist in app 'finnomenaGold'."}, status=400)
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+def get_gold_data(request):
+    logging.debug("Entering get_gold_data function")
+    db_choice = request.GET.get('db_choice', None)
+    if (db_choice is None):
+        logging.debug("Missing 'db_choice' parameter.")
+        return JsonResponse({"error": "Missing 'db_choice' parameter."}, status=400)
+
+    table_mapping = {'0': 'Gold_TH', '1': 'Gold_US'}
+    table_name = table_mapping.get(db_choice)
+    if not table_name:
+        logging.debug("Invalid 'db_choice' parameter value.")
+        return JsonResponse({"error": "Invalid 'db_choice' parameter value. Must be 0 or 1."}, status=400)
+
+    end_timeframe = datetime.now(timezone.utc).date()
+    start_timeframe = None
+
+    frame = request.GET.get('frame', None)
+    start_param = request.GET.get('start', None)
+    end_param = request.GET.get('end', None)
+    group_by = request.GET.get('group_by', 'daily')
+    use_cache = request.GET.get('cache', 'true').lower() == 'true'
+
+    try:
+        if start_param:
+            start_timeframe = datetime.strptime(start_param, "%d-%m-%Y").date()
+        if end_param:
+            end_timeframe = datetime.strptime(end_param, "%d-%m-%Y").date()
+
+        if start_timeframe and end_timeframe and start_timeframe > end_timeframe:
+            logging.debug("'start' date cannot be after 'end' date.")
+            return JsonResponse({"error": "'start' date cannot be after 'end' date."}, status=400)
+
+        show_latest_only = False
+
+        if not start_timeframe and frame:
+            logging.debug(f"Frame parameter provided: {frame}")
+            if frame == "1d":
+                show_latest_only = True
+                start_timeframe = end_timeframe
+            elif frame == "7d":
+                start_timeframe = end_timeframe - timedelta(days=6)
+            elif frame == "15d":
+                start_timeframe = end_timeframe - timedelta(days=14)
+            elif frame == "1m":
+                start_timeframe = (end_timeframe - timedelta(days=30)).replace(day=1)
+            elif frame == "3m":
+                start_timeframe = (end_timeframe - timedelta(days=90)).replace(day=1)
+            elif frame == "6m":
+                start_timeframe = (end_timeframe - timedelta(days=180)).replace(day=1)
+            elif frame == "1y":
+                start_timeframe = end_timeframe.replace(year=end_timeframe.year - 1)
+            elif frame == "3y":
+                start_timeframe = end_timeframe.replace(year=end_timeframe.year - 3)
+            elif frame == "all":
+                start_timeframe = None
+            else:
+                logging.debug("Invalid 'frame' parameter.")
+                return JsonResponse({"status": "error", "message": "Invalid 'frame' parameter."}, status=400)
+
+        table_model = apps.get_model('finnomenaGold', table_name)
+
+        cache_key = f"gold_data:{db_choice}:{frame}:{start_timeframe}:{end_timeframe}:{group_by}"
+        if use_cache:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                logging.debug(f"Cache hit for key: {cache_key}")
+                return JsonResponse({
+                    "cache": [{"status": "used cache", "database": "redis"}],
+                    "count": len(cached_data),
+                    "data": cached_data
+                })
+
+        queryset = table_model.objects.all()
+
+        if frame == "1d" and show_latest_only:
+            logging.debug("Frame is 1d and show_latest_only is True")
+            latest_record = queryset.order_by('-created_at').first()
+            if latest_record:
+                start_timeframe = latest_record.created_at.date()
+                end_timeframe = latest_record.created_at.date()
+                queryset = queryset.filter(created_at__date=start_timeframe)
+            else:
+                logging.debug("No data available")
+                queryset = queryset.none()
+
+            if not queryset.exists():
+                logging.debug("No data found for 1d, fetching data for 7d")
+                start_timeframe = end_timeframe - timedelta(days=6)
+                queryset = table_model.objects.filter(created_at__date__gte=start_timeframe, created_at__date__lte=end_timeframe).order_by('-created_at')
+                if queryset.exists():
+                    latest_record = queryset.first()
+                    queryset = queryset.filter(id=latest_record.id)
+                else:
+                    logging.debug("No data available for 7d either")
+                    queryset = queryset.none()
+        else:
+            if start_timeframe:
+                queryset = queryset.filter(created_at__date__gte=start_timeframe)
+            if end_timeframe and queryset.filter(created_at__date__lte=end_timeframe).exists():
+                queryset = queryset.filter(created_at__date__lte=end_timeframe)
+            elif end_timeframe:
+                closest_date = table_model.objects.filter(created_at__date__lt=end_timeframe).order_by('-created_at').first()
+                if closest_date:
+                    end_timeframe = closest_date.created_at.date()
+                    queryset = queryset.filter(created_at__date__lte=end_timeframe)
+
+        logging.debug(f"Start timeframe: {start_timeframe}, End timeframe: {end_timeframe}")
+        logging.debug(f"Queryset count before grouping: {queryset.count()}")
+
+        if group_by == "daily":
+            queryset = queryset.order_by('created_at')
+            data = list(queryset.values())
+
+        elif group_by == "monthly":
+            queryset = queryset.values("created_at__year", "created_at__month").annotate(
+                avg_price=Avg("price"),
+                min_price=Min("price"),
+                max_price=Max("price")
+            ).order_by("created_at__year", "created_at__month")
+
+            data = [
+                {
+                    "period": f"{entry['created_at__year']}-{entry['created_at__month']:02d}",
+                    "avg_price": entry["avg_price"],
+                    "min_price": entry["min_price"],
+                    "max_price": entry["max_price"]
+                }
+                for entry in queryset
+            ]
+
+        else:
+            logging.debug("Invalid 'group_by' parameter.")
+            return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
+
+        logging.debug(f"Data count: {len(data)}")
+        logging.debug(f"Data: {data}")
+
+        if use_cache:
+            cache.set(cache_key, data, timeout=120)  # Cache for 2 minutes
+            logging.debug(f"Cache set for key: {cache_key}")
+
+        return JsonResponse({
+            "cache": [{"status": "no used cache", "database": "postgresql"}],
+            "count": len(data),
+            "data": data
+        })
+
+    except ValueError:
+        logging.debug("Invalid date format.")
+        return JsonResponse({"error": "Invalid date format. Use 'dd-mm-yyyy'."}, status=400)
+    except LookupError:
+        logging.debug(f"Model '{table_name}' does not exist in app 'finnomenaGold'.")
+        return JsonResponse({"error": f"Model '{table_name}' does not exist in app 'finnomenaGold'."}, status=400)
+    except Exception as e:
+        logging.debug(f"Exception occurred: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=500)
