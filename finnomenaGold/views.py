@@ -80,10 +80,10 @@ def fetch_gold_th_data(request):
 
 def fetch_gold_us_data(request):
     # initial data 
-    # url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2005-01-01/{currentDateTime}"
+    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2005-01-01/{currentDateTime}"
     # initial data
     daysAgo5 = (datetime.now() - timedelta(days=5)).strftime('%Y-%m-%d')
-    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/{daysAgo5}/{currentDateTime}"
+    # url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/{daysAgo5}/{currentDateTime}"
     contry_table = apps.get_model('finnomenaGold', 'Gold_US')
     print(f"✅ > url us : {url}")
 
@@ -145,13 +145,16 @@ def delete_all_gold_data(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 def get_gold_data(request):
+    logging.debug("Entering get_gold_data function")
     db_choice = request.GET.get('db_choice', None)
-    if db_choice is None:
+    if (db_choice is None):
+        logging.debug("Missing 'db_choice' parameter.")
         return JsonResponse({"error": "Missing 'db_choice' parameter."}, status=400)
 
     table_mapping = {'0': 'Gold_TH', '1': 'Gold_US'}
     table_name = table_mapping.get(db_choice)
     if not table_name:
+        logging.debug("Invalid 'db_choice' parameter value.")
         return JsonResponse({"error": "Invalid 'db_choice' parameter value. Must be 0 or 1."}, status=400)
 
     end_timeframe = datetime.now(timezone.utc).date()
@@ -162,14 +165,6 @@ def get_gold_data(request):
     end_param = request.GET.get('end', None)
     group_by = request.GET.get('group_by', 'daily')
 
-    cache_time = 3600  # Cache time in seconds (1 hour)
-    cache_param = request.GET.get('cache', 'True').lower()
-
-    if cache_param == 'false':
-        use_cache = False
-    else:
-        use_cache = True
-
     try:
         if start_param:
             start_timeframe = datetime.strptime(start_param, "%d-%m-%Y").date()
@@ -177,131 +172,74 @@ def get_gold_data(request):
             end_timeframe = datetime.strptime(end_param, "%d-%m-%Y").date()
 
         if start_timeframe and end_timeframe and start_timeframe > end_timeframe:
+            logging.debug("'start' date cannot be after 'end' date.")
             return JsonResponse({"error": "'start' date cannot be after 'end' date."}, status=400)
 
-        # ตัวแปรเพื่อบอกว่าต้องการเฉพาะข้อมูลล่าสุด
         show_latest_only = False
 
         if not start_timeframe and frame:
+            logging.debug(f"Frame parameter provided: {frame}")
             if frame == "1d":
-                # กรณี 1d ให้ค้นหาข้อมูลล่าสุด 
                 show_latest_only = True
-                # ยังไม่กำหนดช่วงเวลาตอนนี้ เพราะจะต้องดูก่อนว่ามีข้อมูลวันนี้หรือไม่
                 start_timeframe = end_timeframe
             elif frame == "7d":
                 start_timeframe = end_timeframe - timedelta(days=6)
-                show_latest_only = False
             elif frame == "15d":
                 start_timeframe = end_timeframe - timedelta(days=14)
-                show_latest_only = False
             elif frame == "1m":
                 start_timeframe = (end_timeframe - timedelta(days=30)).replace(day=1)
-                show_latest_only = False
             elif frame == "3m":
                 start_timeframe = (end_timeframe - timedelta(days=90)).replace(day=1)
-                show_latest_only = False
             elif frame == "6m":
                 start_timeframe = (end_timeframe - timedelta(days=180)).replace(day=1)
-                show_latest_only = False
             elif frame == "1y":
                 start_timeframe = end_timeframe.replace(year=end_timeframe.year - 1)
-                show_latest_only = False
             elif frame == "3y":
                 start_timeframe = end_timeframe.replace(year=end_timeframe.year - 3)
-                show_latest_only = False
             elif frame == "all":
                 start_timeframe = None
-                show_latest_only = False
             else:
+                logging.debug("Invalid 'frame' parameter.")
                 return JsonResponse({"status": "error", "message": "Invalid 'frame' parameter."}, status=400)
-        else:
-            # กรณีไม่ได้กำหนด frame หรือใช้ start/end โดยตรง
-            show_latest_only = False
 
         table_model = apps.get_model('finnomenaGold', table_name)
 
-        cache_key = f"gold_data:{db_choice}:{frame}:{start_timeframe}:{end_timeframe}:{group_by}"
-        count_cache_key = f"gold_data_count:{db_choice}:{group_by}"
-
-        # Start with PostgreSQL as default
-        cache_used = "PostgreSQL" if use_cache else "None"
-    
-        if use_cache:
-            logging.debug(f"Checking cache for key: {cache_key}")
-            cached_data = cache.get(cache_key)
-            if cached_data:
-                cached_params = cached_data.get('params', {})
-                if cached_params == {'start': start_timeframe, 'end': end_timeframe, 'frame': frame, 'group_by': group_by}:
-                    data = cached_data["data"]
-                    logging.debug(f"Cache hit for key: {cache_key}")
-                    # Set cache_used to Redis if we hit Redis cache
-                    cache_used = "Redis"
-                    if group_by == "monthly":
-                        data = [entry for entry in data if (start_timeframe is None or entry["period"] >= f"{start_timeframe.year}-{start_timeframe.month:02d}") and (end_timeframe is None or entry["period"] <= f"{end_timeframe.year}-{end_timeframe.month:02d}")]
-                    elif group_by == "daily":
-                        data = [entry for entry in data if (start_timeframe is None or entry["created_at"].date() >= start_timeframe) and (end_timeframe is None or entry["created_at"].date() <= end_timeframe)]
-
-                    return JsonResponse({
-                        "cache_used": cache_used,
-                        "cache": cache_key,
-                        "count": len(data),
-                        "data": data
-                    }, status=200)
-                else:
-                    logging.debug(f"Cache miss for key: {cache_key}, params do not match.")
-            else:
-                logging.debug(f"Cache miss for key: {cache_key}, no data found.")
-
-        # Query the database if data is not in cache
-        current_record_count = table_model.objects.count()
-        latest_record = table_model.objects.aggregate(last_updated=Max("created_at"))
-
-        cached_count_data = cache.get(count_cache_key)
-        if cached_count_data:
-            cached_count, cached_latest = cached_count_data
-            if cached_count == current_record_count and cached_latest == latest_record["last_updated"]:
-                logging.debug("Cache count and latest record are up-to-date. No need to refresh cache.")
-            else:
-                logging.debug("Cache is outdated, deleting existing cache.")
-                cache.delete(cache_key)
-
         queryset = table_model.objects.all()
 
-        # สำหรับกรณี 1d ที่อาจต้องแสดงข้อมูลล่าสุดแทนหากไม่มีข้อมูลของวันนี้
         if frame == "1d" and show_latest_only:
-            # ลองค้นหาข้อมูลของวันนี้ก่อน
-            today_data = queryset.filter(created_at__date=end_timeframe).order_by('-created_at')
-            
-            if today_data.exists():
-                # ถ้ามีข้อมูลของวันนี้ ให้ใช้ข้อมูลเฉพาะวันนี้
-                queryset = today_data
+            logging.debug("Frame is 1d and show_latest_only is True")
+            latest_record = queryset.order_by('-created_at').first()
+            if latest_record:
+                start_timeframe = latest_record.created_at.date()
+                end_timeframe = latest_record.created_at.date()
+                queryset = queryset.filter(created_at__date=start_timeframe)
             else:
-                # ถ้าไม่มีข้อมูลของวันนี้ ให้ใช้ข้อมูลล่าสุดแทน โดยเรียงตามวันที่จากล่าสุดไปเก่าสุด
-                latest_record = queryset.order_by('-created_at').first()
-                
-                if latest_record:
-                    # ถ้ามีข้อมูลล่าสุด กำหนดให้ start_timeframe และ end_timeframe เป็นวันที่ของข้อมูลล่าสุด
-                    start_timeframe = latest_record.created_at.date()
-                    end_timeframe = latest_record.created_at.date()
-                    queryset = queryset.filter(created_at__date=start_timeframe)
+                logging.debug("No data available")
+                queryset = queryset.none()
+
+            if not queryset.exists():
+                logging.debug("No data found for 1d, fetching data for 7d")
+                start_timeframe = end_timeframe - timedelta(days=6)
+                queryset = table_model.objects.filter(created_at__date__gte=start_timeframe, created_at__date__lte=end_timeframe).order_by('-created_at')
+                if queryset.exists():
+                    latest_record = queryset.first()
+                    queryset = queryset.filter(id=latest_record.id)
                 else:
-                    # ถ้าไม่มีข้อมูลเลย (ไม่น่าเกิดกรณีนี้) ให้คืนค่าเป็น queryset ว่าง
+                    logging.debug("No data available for 7d either")
                     queryset = queryset.none()
         else:
-            # กรองตามช่วงเวลาเฉพาะเมื่อไม่ใช่กรณีที่ต้องการเพียงข้อมูลล่าสุด
             if start_timeframe:
                 queryset = queryset.filter(created_at__date__gte=start_timeframe)
-            
-            # ตรวจสอบว่ามีข้อมูลในช่วงวันที่สิ้นสุดหรือไม่
             if end_timeframe and queryset.filter(created_at__date__lte=end_timeframe).exists():
                 queryset = queryset.filter(created_at__date__lte=end_timeframe)
             elif end_timeframe:
-                # ถ้าไม่มีข้อมูลในวันที่ต้องการ หาข้อมูลวันที่ใกล้เคียงที่สุด
-                # แก้ไขส่วนนี้ให้เรียงลำดับตาม created_at จากใหม่ไปเก่า
                 closest_date = table_model.objects.filter(created_at__date__lt=end_timeframe).order_by('-created_at').first()
                 if closest_date:
                     end_timeframe = closest_date.created_at.date()
                     queryset = queryset.filter(created_at__date__lte=end_timeframe)
+
+        logging.debug(f"Start timeframe: {start_timeframe}, End timeframe: {end_timeframe}")
+        logging.debug(f"Queryset count before grouping: {queryset.count()}")
 
         if group_by == "daily":
             queryset = queryset.order_by('created_at')
@@ -319,32 +257,31 @@ def get_gold_data(request):
                     "period": f"{entry['created_at__year']}-{entry['created_at__month']:02d}",
                     "avg_price": entry["avg_price"],
                     "min_price": entry["min_price"],
-                    "max_price": entry["max_price"],
+                    "max_price": entry["max_price"]
                 }
                 for entry in queryset
             ]
 
         else:
+            logging.debug("Invalid 'group_by' parameter.")
             return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
 
-        # Save new data to cache
-        if use_cache:
-            logging.debug(f"Saving new data to cache with key: {cache_key}")
-            cache.set(count_cache_key, (current_record_count, latest_record["last_updated"]), timeout=cache_time)
-            cache.set(cache_key, {"data": data, "count": len(data), "params": {'start': start_timeframe, 'end': end_timeframe, 'frame': frame, 'group_by': group_by}}, timeout=cache_time)
+        logging.debug(f"Data count: {len(data)}")
+        logging.debug(f"Data: {data}")
 
         return JsonResponse({
-            "cache_used": cache_used,
-            "cache": cache_key,
             "count": len(data),
             "data": data
         })
 
     except ValueError:
+        logging.debug("Invalid date format.")
         return JsonResponse({"error": "Invalid date format. Use 'dd-mm-yyyy'."}, status=400)
     except LookupError:
+        logging.debug(f"Model '{table_name}' does not exist in app 'finnomenaGold'.")
         return JsonResponse({"error": f"Model '{table_name}' does not exist in app 'finnomenaGold'."}, status=400)
     except Exception as e:
+        logging.debug(f"Exception occurred: {str(e)}")
         return JsonResponse({"error": str(e)}, status=500)
 
 def create_gold_data(request):
