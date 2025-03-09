@@ -179,27 +179,44 @@ def get_gold_data(request):
         if start_timeframe and end_timeframe and start_timeframe > end_timeframe:
             return JsonResponse({"error": "'start' date cannot be after 'end' date."}, status=400)
 
+        # ตัวแปรเพื่อบอกว่าต้องการเฉพาะข้อมูลล่าสุด
+        show_latest_only = False
+
         if not start_timeframe and frame:
             if frame == "1d":
+                # กรณี 1d ให้ค้นหาข้อมูลล่าสุด 
+                show_latest_only = True
+                # ยังไม่กำหนดช่วงเวลาตอนนี้ เพราะจะต้องดูก่อนว่ามีข้อมูลวันนี้หรือไม่
                 start_timeframe = end_timeframe
             elif frame == "7d":
                 start_timeframe = end_timeframe - timedelta(days=6)
+                show_latest_only = False
             elif frame == "15d":
                 start_timeframe = end_timeframe - timedelta(days=14)
+                show_latest_only = False
             elif frame == "1m":
                 start_timeframe = (end_timeframe - timedelta(days=30)).replace(day=1)
+                show_latest_only = False
             elif frame == "3m":
                 start_timeframe = (end_timeframe - timedelta(days=90)).replace(day=1)
+                show_latest_only = False
             elif frame == "6m":
                 start_timeframe = (end_timeframe - timedelta(days=180)).replace(day=1)
+                show_latest_only = False
             elif frame == "1y":
                 start_timeframe = end_timeframe.replace(year=end_timeframe.year - 1)
+                show_latest_only = False
             elif frame == "3y":
                 start_timeframe = end_timeframe.replace(year=end_timeframe.year - 3)
+                show_latest_only = False
             elif frame == "all":
                 start_timeframe = None
+                show_latest_only = False
             else:
-                return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
+                return JsonResponse({"status": "error", "message": "Invalid 'frame' parameter."}, status=400)
+        else:
+            # กรณีไม่ได้กำหนด frame หรือใช้ start/end โดยตรง
+            show_latest_only = False
 
         table_model = apps.get_model('finnomenaGold', table_name)
 
@@ -250,16 +267,41 @@ def get_gold_data(request):
 
         queryset = table_model.objects.all()
 
-        if start_timeframe:
-            queryset = queryset.filter(created_at__date__gte=start_timeframe)
-        if queryset.filter(created_at__date__lte=end_timeframe).exists():
-            queryset = queryset.filter(created_at__date__lte=end_timeframe)
+        # สำหรับกรณี 1d ที่อาจต้องแสดงข้อมูลล่าสุดแทนหากไม่มีข้อมูลของวันนี้
+        if frame == "1d" and show_latest_only:
+            # ลองค้นหาข้อมูลของวันนี้ก่อน
+            today_data = queryset.filter(created_at__date=end_timeframe).order_by('-created_at')
+            
+            if today_data.exists():
+                # ถ้ามีข้อมูลของวันนี้ ให้ใช้ข้อมูลเฉพาะวันนี้
+                queryset = today_data
+            else:
+                # ถ้าไม่มีข้อมูลของวันนี้ ให้ใช้ข้อมูลล่าสุดแทน โดยเรียงตามวันที่จากล่าสุดไปเก่าสุด
+                latest_record = queryset.order_by('-created_at').first()
+                
+                if latest_record:
+                    # ถ้ามีข้อมูลล่าสุด กำหนดให้ start_timeframe และ end_timeframe เป็นวันที่ของข้อมูลล่าสุด
+                    start_timeframe = latest_record.created_at.date()
+                    end_timeframe = latest_record.created_at.date()
+                    queryset = queryset.filter(created_at__date=start_timeframe)
+                else:
+                    # ถ้าไม่มีข้อมูลเลย (ไม่น่าเกิดกรณีนี้) ให้คืนค่าเป็น queryset ว่าง
+                    queryset = queryset.none()
         else:
-            # If no records are found for the exact end_timeframe, find the closest date
-            closest_date = table_model.objects.filter(created_at__date__lt=end_timeframe).order_by('-created_at__date').first()
-            if closest_date:
-                end_timeframe = closest_date.created_at.date()
+            # กรองตามช่วงเวลาเฉพาะเมื่อไม่ใช่กรณีที่ต้องการเพียงข้อมูลล่าสุด
+            if start_timeframe:
+                queryset = queryset.filter(created_at__date__gte=start_timeframe)
+            
+            # ตรวจสอบว่ามีข้อมูลในช่วงวันที่สิ้นสุดหรือไม่
+            if end_timeframe and queryset.filter(created_at__date__lte=end_timeframe).exists():
                 queryset = queryset.filter(created_at__date__lte=end_timeframe)
+            elif end_timeframe:
+                # ถ้าไม่มีข้อมูลในวันที่ต้องการ หาข้อมูลวันที่ใกล้เคียงที่สุด
+                # แก้ไขส่วนนี้ให้เรียงลำดับตาม created_at จากใหม่ไปเก่า
+                closest_date = table_model.objects.filter(created_at__date__lt=end_timeframe).order_by('-created_at').first()
+                if closest_date:
+                    end_timeframe = closest_date.created_at.date()
+                    queryset = queryset.filter(created_at__date__lte=end_timeframe)
 
         if group_by == "daily":
             queryset = queryset.order_by('created_at')
@@ -415,9 +457,6 @@ def create_gold_data(request):
             with transaction.atomic():
                 created_records = contry_table.objects.bulk_create(bulk_data, batch_size=5000)
             
-            # Get IDs of created records
-            created_ids = [record.id for record in created_records]
-            
             # Fetch the created data for verification
             created_data = []
             for record in created_records:
@@ -440,7 +479,6 @@ def create_gold_data(request):
             return JsonResponse({
                 "status": "success",
                 "message": f"Data created successfully. {len(bulk_data)} new records added.",
-                "ids": created_ids,
                 "created_records": created_data
             })
         else:
