@@ -364,6 +364,37 @@ def get_gold_by_id(request, id=None):
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 
+def apply_max(data, max_val):
+    """
+    Apply max parameter to limit the number of data points while ensuring first and last points are included.
+    Data points between first and last are distributed evenly.
+    """
+    if max_val and len(data) > int(max_val):
+        max_val = int(max_val)
+        
+        # If max_val is less than 2, return at least first point
+        if max_val < 2:
+            return [data[0]]
+            
+        # Always include first and last points
+        selected = [data[0]]
+        
+        # If we have more than 2 points to select, distribute the middle ones evenly
+        if max_val > 2:
+            # Calculate step size for the middle points (excluding first and last)
+            step = (len(data) - 1) / (max_val - 1)
+            
+            # Add the middle points (excluding first which was already added and last which will be added)
+            for i in range(1, max_val - 1):
+                idx = int(i * step)
+                selected.append(data[idx])
+        
+        # Add the last point
+        selected.append(data[-1])
+        
+        return selected
+    return data
+
 def get_gold_data(request):
     logging.debug("Entering get_gold_data function")
     db_choice = request.GET.get('db_choice', None)
@@ -385,6 +416,7 @@ def get_gold_data(request):
     end_param = request.GET.get('end', None)
     group_by = request.GET.get('group_by', 'daily')
     use_cache = request.GET.get('cache', 'true').lower() == 'true'
+    max_points = request.GET.get('max')
 
     try:
         if start_param:
@@ -408,11 +440,12 @@ def get_gold_data(request):
             elif frame == "15d":
                 start_timeframe = end_timeframe - timedelta(days=14)
             elif frame == "1m":
-                start_timeframe = (end_timeframe - timedelta(days=30)).replace(day=1)
+                # Fix: Show last 30 days instead of just current month
+                start_timeframe = end_timeframe - timedelta(days=30)
             elif frame == "3m":
-                start_timeframe = (end_timeframe - timedelta(days=90)).replace(day=1)
+                start_timeframe = end_timeframe - timedelta(days=90)
             elif frame == "6m":
-                start_timeframe = (end_timeframe - timedelta(days=180)).replace(day=1)
+                start_timeframe = end_timeframe - timedelta(days=180)
             elif frame == "1y":
                 start_timeframe = end_timeframe.replace(year=end_timeframe.year - 1)
             elif frame == "3y":
@@ -425,7 +458,7 @@ def get_gold_data(request):
 
         table_model = apps.get_model('finnomenaGold', table_name)
 
-        cache_key = f"gold_data:{db_choice}:{frame}:{start_timeframe}:{end_timeframe}:{group_by}"
+        cache_key = f"gold_data:{db_choice}:{frame}:{start_timeframe}:{end_timeframe}:{group_by}:{max_points}"
         if use_cache:
             cached_data = cache.get(cache_key)
             if cached_data:
@@ -476,6 +509,10 @@ def get_gold_data(request):
         if group_by == "daily":
             queryset = queryset.order_by('created_at')
             data = list(queryset.values())
+            
+            # Apply max parameter to limit data points if provided
+            if max_points:
+                data = apply_max(data, max_points)
 
         elif group_by == "monthly":
             queryset = queryset.values("created_at__year", "created_at__month").annotate(
@@ -493,6 +530,10 @@ def get_gold_data(request):
                 }
                 for entry in queryset
             ]
+            
+            # Apply max parameter to limit data points if provided
+            if max_points:
+                data = apply_max(data, max_points)
 
         else:
             logging.debug("Invalid 'group_by' parameter.")

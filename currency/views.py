@@ -234,11 +234,43 @@ def serialize_data(data):
             entry["date"] = entry["date"].isoformat()
     return data
 
+def apply_max(data, max_val):
+    """
+    Apply max parameter to limit the number of data points while ensuring first and last points are included.
+    Data points between first and last are distributed evenly.
+    """
+    if max_val and len(data) > int(max_val):
+        max_val = int(max_val)
+        
+        # If max_val is less than 2, return at least first point
+        if max_val < 2:
+            return [data[0]]
+            
+        # Always include first and last points
+        selected = [data[0]]
+        
+        # If we have more than 2 points to select, distribute the middle ones evenly
+        if max_val > 2:
+            # Calculate step size for the middle points (excluding first and last)
+            step = (len(data) - 1) / (max_val - 1)
+            
+            # Add the middle points (excluding first which was already added and last which will be added)
+            for i in range(1, max_val - 1):
+                idx = int(i * step)
+                selected.append(data[idx])
+        
+        # Add the last point
+        selected.append(data[-1])
+        
+        return selected
+    return data
+
 def get_currency_data(request):
     frame = request.GET.get('frame', None)
     start_date = request.GET.get('start', None)
     end_date = request.GET.get('end', None)
     group_by = request.GET.get('group_by', 'daily')
+    max_points = request.GET.get('max')  # Add max parameter support
 
     cache_time = 3600  # Cache time in seconds (1 hour)
     use_cache = request.GET.get('cache', 'True').lower() != 'false'
@@ -265,7 +297,8 @@ def get_currency_data(request):
         elif frame == "15d":
             start_date = end_timeframe - timedelta(days=14)
         elif frame == "1m":
-            start_date = end_timeframe.replace(day=1)
+            # Fix: Show last 30 days instead of just current month
+            start_date = end_timeframe - timedelta(days=30)
         elif frame == "3m":
             start_date = end_timeframe - timedelta(days=90)
         elif frame == "1y":
@@ -277,8 +310,8 @@ def get_currency_data(request):
         else:
             return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
         
-    # Cache key
-    cache_key = f"currency_data:{start_date}:{end_date}:{frame}:{group_by}"
+    # Cache key - include max_points in cache key
+    cache_key = f"currency_data:{start_date}:{end_date}:{frame}:{group_by}:{max_points}"
     logger.info(f"Generated cache key: {cache_key}")
 
     # Check Cache first
@@ -317,6 +350,10 @@ def get_currency_data(request):
     if group_by == "daily":
         queryset = queryset.order_by('date')
         data = list(queryset.values())
+        
+        # Apply max parameter to limit data points if provided
+        if max_points:
+            data = apply_max(data, max_points)
 
     elif group_by == "monthly":
         queryset = queryset.values("date__year", "date__month").annotate(
@@ -344,6 +381,10 @@ def get_currency_data(request):
             }
             for entry in queryset
         ]
+        
+        # Apply max parameter to limit data points if provided
+        if max_points:
+            data = apply_max(data, max_points)
 
     else:
         return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)

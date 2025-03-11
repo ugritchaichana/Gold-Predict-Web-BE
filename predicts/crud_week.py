@@ -90,13 +90,27 @@ def read_week(request, week_id=None):
     def apply_max(data, max_val):
         if max_val and len(data) > int(max_val):
             max_val = int(max_val)
-            step = len(data) / max_val
-            current = 0.0
-            selected = []
-            for _ in range(max_val):
-                idx = int(current)
-                selected.append(data[idx])
-                current += step
+            
+            # If max_val is less than 2, return at least first point
+            if max_val < 2:
+                return [data[0]]
+                
+            # Always include first and last points
+            selected = [data[0]]
+            
+            # If we have more than 2 points to select, distribute the middle ones evenly
+            if max_val > 2:
+                # Calculate step size for the middle points (excluding first and last)
+                step = (len(data) - 1) / (max_val - 1)
+                
+                # Add the middle points (excluding first which was already added and last which will be added)
+                for i in range(1, max_val - 1):
+                    idx = int(i * step)
+                    selected.append(data[idx])
+            
+            # Add the last point
+            selected.append(data[-1])
+            
             return selected
         return data
 
