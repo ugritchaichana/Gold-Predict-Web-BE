@@ -22,7 +22,7 @@ services:
       REDIS_PORT: "6379"
       IS_DOCKER_ENV: "true"
     volumes:
-      - ./goldpridictweb.json:/app/${GCS_SERVICE_ACCOUNT_KEY}
+      - ./Gold-Predict-Web-BE:/app  # Mount โปรเจกต์เข้าไปใน /app
     depends_on:
       - redis
     command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
@@ -43,6 +43,7 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./Gold-Predict-Web-BE:/Gold-Predict-Web-BE
+    depends_on:
       - app
 
 volumes:
