@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import create_week_view, read_week_view, update_week_view, delete_week_view
+from .test.read import read
 
 urlpatterns = [
     # Week CRUD URLs
@@ -7,6 +8,8 @@ urlpatterns = [
     path('week/read/', read_week_view, name='read_week'),
     path('week/update/', update_week_view, name='update_week'),
     path('week/delete/', delete_week_view, name='delete_week'),
+
+    # path('week/test/read/', read, name='read'),
 
     # Month CRUD URLs
     # path('month/create/', views.create_month_view, name='create_month'),

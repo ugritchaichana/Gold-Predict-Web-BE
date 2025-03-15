@@ -88,7 +88,7 @@ def read_week(request, week_id=None):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
     def apply_max(data, max_val):
-        if max_val and len(data) > int(max_val):
+        if (max_val and len(data) > int(max_val)):
             max_val = int(max_val)
             
             # If max_val is less than 2, return at least first point
@@ -194,7 +194,7 @@ def read_week(request, week_id=None):
             return JsonResponse(format_chart_data(flattened_data, 'date', 'price'))
         return JsonResponse({'status': 'success', 'weeks': week_list}, safe=False)
 
-    elif range_param == 'sort_all':
+    elif range_param == 'sort_all_old':
         weeks = Week.objects.all().order_by('id')
         week_list = []
         for week in weeks:
@@ -232,6 +232,107 @@ def read_week(request, week_id=None):
                 'filtered_data': filtered_data,
                 'weeks': week_list
             }, safe=False)
+
+    elif range_param == 'sort_all':
+        start_date = request.GET.get('startdate', "2000-01-01")
+        end_date = request.GET.get('enddate', (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d'))
+        # Add a parameter to control whether to include rawData in the response
+        include_raw_data = request.GET.get('rawData', 'true').lower() != 'false'
+        
+        weeks = Week.objects.filter(date__range=[start_date, end_date])
+        result = []
+        for week in weeks:
+            predictions = {
+                'id': week.id,
+                'Prediction date': week.date,
+                'Prediction prices': {}
+            }
+
+            base_date = datetime.strptime(week.date, '%Y-%m-%d')
+            for i in range(8):
+                date = (base_date + timedelta(days=i)).strftime('%Y-%m-%d')
+                price = getattr(week, f'price_{i}')
+                if price is not None:
+                    predictions['Prediction prices'][date] = round(price, 2)
+            result.append(predictions)
+
+        filtered_result = []
+        
+        start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+        end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
+        
+        latest_prediction_date = None
+        latest_prediction_datetime = None
+        if result:
+            for week in result:
+                prediction_date = week['Prediction date']
+                prediction_datetime = datetime.strptime(prediction_date, '%Y-%m-%d')
+                if latest_prediction_datetime is None or prediction_datetime > latest_prediction_datetime:
+                    latest_prediction_datetime = prediction_datetime
+                    latest_prediction_date = prediction_date
+        
+        date_predictions = {}
+        
+        for week in result:
+            prediction_date = week['Prediction date']
+            for date, price in week['Prediction prices'].items():
+                date_datetime = datetime.strptime(date, '%Y-%m-%d')
+                
+                if date_datetime < start_datetime or date_datetime > end_datetime:
+                    continue
+                
+                if date not in date_predictions or prediction_date > date_predictions[date]['Prediction date']:
+                    date_predictions[date] = {
+                        'Prediction date': prediction_date,
+                        'date': date,
+                        'price': price
+                    }
+        
+        current_date = start_datetime
+        while current_date <= end_datetime:
+            current_date_str = current_date.strftime('%Y-%m-%d')
+            if current_date_str not in date_predictions:
+                for week in sorted(result, key=lambda x: x['Prediction date'], reverse=True):
+                    if current_date_str in week['Prediction prices']:
+                        date_predictions[current_date_str] = {
+                            'Prediction date': week['Prediction date'],
+                            'date': current_date_str,
+                            'price': week['Prediction prices'][current_date_str]
+                        }
+                        break
+            current_date += timedelta(days=1)
+        
+        filtered_result = sorted(date_predictions.values(), key=lambda x: x['date'])
+        
+        if latest_prediction_date:
+            latest_week = next((w for w in result if w['Prediction date'] == latest_prediction_date), None)
+            if latest_week:
+                for date, price in latest_week['Prediction prices'].items():
+                    date_datetime = datetime.strptime(date, '%Y-%m-%d')
+                    if date_datetime > end_datetime:
+                        filtered_result.append({
+                            'Prediction date': latest_prediction_date,
+                            'date': date,
+                            'price': price
+                        })
+        
+        filtered_result = apply_max(filtered_result, max_points)
+        
+        if display == 'chart':
+            return JsonResponse(format_chart_data(filtered_result, 'date', 'price'))
+        
+        # Prepare the response with conditional rawData inclusion
+        response_data = {
+            'startDate': start_date,
+            'endDate': end_date,
+            'filtered_data': filtered_result
+        }
+        
+        # Only include rawData if parameter is true
+        if include_raw_data:
+            response_data['rawData'] = result
+            
+        return JsonResponse(response_data)
 
     elif date_param:
         try:
