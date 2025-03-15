@@ -18,7 +18,8 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_file(SERVICE_A
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = True
+DEBUG = False
+# DEBUG = True
 # DEBUG = config('DEBUG', default=False, cast=bool)
 
 # อนุญาตให้ทุก host สามารถเข้าถึงได้

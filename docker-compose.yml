@@ -42,8 +42,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./Gold-Predict-Web-BE:/app
-    depends_on:
+      - ./Gold-Predict-Web-BE:/Gold-Predict-Web-BE
       - app
 
 volumes:
