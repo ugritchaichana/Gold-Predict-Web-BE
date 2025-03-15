@@ -36,5 +36,15 @@ services:
       - redis_data:/data
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
 
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./Gold-Predict-Web-BE:/app
+    depends_on:
+      - app
+
 volumes:
   redis_data:
