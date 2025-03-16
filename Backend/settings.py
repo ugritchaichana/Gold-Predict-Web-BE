@@ -18,8 +18,8 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_file(SERVICE_A
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
-# DEBUG = False
-DEBUG = True
+DEBUG = False
+# DEBUG = True
 # DEBUG = config('DEBUG', default=False, cast=bool)
 
 # อนุญาตให้ทุก host สามารถเข้าถึงได้
@@ -29,7 +29,6 @@ ALLOWED_HOSTS = ['*']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-
 
 # Application definition
 INSTALLED_APPS = [
