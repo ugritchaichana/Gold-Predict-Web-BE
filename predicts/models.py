@@ -21,3 +21,4 @@ class Month(models.Model):
     low = models.FloatField(null=True)
     date = models.CharField(max_length=16,null=True)
     created_at = models.DateTimeField(null=True)
+    month_predict = models.CharField(max_length=16,null=True)

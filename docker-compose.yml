@@ -42,7 +42,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./.well-known:/Gold-Predict-Web-BE/.well-known  # แมปเฉพาะ .well-known
+      - ./.well-known:/Gold-Predict-Web-BE/.well-known 
     depends_on:
       - app
 
