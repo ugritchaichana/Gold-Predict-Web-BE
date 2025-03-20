@@ -12,6 +12,7 @@ def create_month(request):
             low=data.get('low'),
             date=data.get('date'),
             created_at=data.get('created_at'),
+            month_predict=data.get('month_predict')
         )
         return JsonResponse({'status': 'success', 'month': month.id})
 
@@ -27,10 +28,28 @@ def read_month(request, month_id):
                 'low': month.low,
                 'date': month.date,
                 'created_at': month.created_at,
+                'month_predict': month.month_predict
             }
         })
     except Month.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Month not found'}, status=404)
+
+def read_all_months(request):
+    if request.method == 'GET':
+        months = Month.objects.all()
+        month_list = [
+            {
+                'timestamp': month.timestamp,
+                'open': month.open,
+                'high': month.high,
+                'low': month.low,
+                'date': month.date,
+                'created_at': month.created_at,
+                'month_predict': month.month_predict
+            }
+            for month in months
+        ]
+        return JsonResponse({'status': 'success', 'months': month_list})
 
 def update_month(request, month_id):
     if request.method == 'PUT':
@@ -43,7 +62,9 @@ def update_month(request, month_id):
             month.low = data.get('low', month.low)
             month.date = data.get('date', month.date)
             month.created_at = data.get('created_at', month.created_at)
+            month.month_predict = data.get('month_predict', month.month_predict)
             month.save()
+            print(f"Updated month_predict: {month.month_predict}")  # Debug statement
             return JsonResponse({'status': 'success', 'month': month.id})
         except Month.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Month not found'}, status=404)
