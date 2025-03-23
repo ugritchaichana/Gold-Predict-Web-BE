@@ -14,5 +14,6 @@ urlpatterns = [
     path('finnomenaGold/', include('finnomenaGold.urls')),
     path('predicts/', include('predicts.urls')),
     path('health/', health_check, name='health_check'),
+    path('data/', include('data.urls')),
 
 ]

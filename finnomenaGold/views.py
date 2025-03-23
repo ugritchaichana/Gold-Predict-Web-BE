@@ -80,10 +80,10 @@ def fetch_gold_th_data(request):
 
 def fetch_gold_us_data(request):
     # initial data 
-    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2005-01-01/{currentDateTime}"
+    # url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2005-01-01/{currentDateTime}"
     # initial data
     daysAgo5 = (datetime.now() - timedelta(days=5)).strftime('%Y-%m-%d')
-    # url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/{daysAgo5}/{currentDateTime}"
+    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/{daysAgo5}/{currentDateTime}"
     contry_table = apps.get_model('finnomenaGold', 'Gold_US')
     print(f"✅ > url us : {url}")
 
