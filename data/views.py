@@ -97,9 +97,10 @@ def create_data_set(request):
 @require_GET
 def get_data(request):
     try:
-        select = request.GET.get('select', 'USDTHB').upper()
+        select = request.GET.get('select', '').upper()
         start_str = request.GET.get('start', '')
         end_str = request.GET.get('end', '')
+        display = request.GET.get('display', '')
         local_tz = pytz.timezone('Asia/Bangkok')
         
         if not start_str:
@@ -140,8 +141,8 @@ def get_data(request):
 
         if select == 'USDTHB':
             data = USDTHB.objects.filter(timestamp__gte=start_ts, timestamp__lte=end_ts).values()
-        elif select in ('GOLDTH', 'GOLDUS'):
-            data = f"test {select}"
+        elif select in ('GOLDTH'):
+            data = GoldTH.objects.filter(timestamp__gte=start_ts, timestamp__lte=end_ts).values()
         else:
             return JsonResponse({
                 "status": "error",
