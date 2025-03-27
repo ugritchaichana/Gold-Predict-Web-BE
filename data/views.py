@@ -150,22 +150,104 @@ def get_data(request):
                 "data": None
             }, status=400)
         
-        return JsonResponse({
-            "status": "success",
-            "data": list(data),
-            "start_date": format_date(start_dt),
-            "end_date": format_date(end_dt),
-            "default_dates_used": {
-                "start": format_date(default_start) if default_start else None,
-                "end": format_date(default_end) if default_end else None
+        # Format data for chart display if requested
+        if display.lower() == 'chart':
+            formatted_data = format_data_for_chart(list(data), select)
+            response_data = {
+                "status": "success",
+                "data": formatted_data,
+                "start_date": format_date(start_dt),
+                "end_date": format_date(end_dt),
+                "default_dates_used": {
+                    "start": format_date(default_start) if default_start else None,
+                    "end": format_date(default_end) if default_end else None
+                }
             }
-        }, status=200)
+        else:
+            response_data = {
+                "status": "success",
+                "data": list(data),
+                "start_date": format_date(start_dt),
+                "end_date": format_date(end_dt),
+                "default_dates_used": {
+                    "start": format_date(default_start) if default_start else None,
+                    "end": format_date(default_end) if default_end else None
+                }
+            }
+        
+        return JsonResponse(response_data, status=200)
     except Exception as e:
         return JsonResponse({
             "status": "error",
             "message": "Internal server error",
             "data": None
         }, status=500)
+
+def format_data_for_chart(data, data_type):
+    if not data:
+        return {"labels": [], "datasets": []}
+    
+    data = sorted(data, key=lambda x: x['timestamp'])
+    
+    if data_type == 'USDTHB':
+        labels_time = [datetime.fromtimestamp(item['timestamp']).strftime('%d-%m-%Y %H:%M') for item in data]
+        
+        return {
+            "Time": labels_time,
+            "datasets": [
+                {
+                    "label": "Price",
+                    "data": [item['close'] for item in data],
+                },
+                {
+                    "label": "Close",
+                    "data": [item['close'] for item in data],
+                },
+                {
+                    "label": "Open",
+                    "data": [item['open'] for item in data],
+                },
+                {
+                    "label": "High",
+                    "data": [item['high'] for item in data],
+                },
+                {
+                    "label": "Low",
+                    "data": [item['low'] for item in data],
+                }
+            ]
+        }
+    
+    elif data_type == 'GOLDTH':
+        labels_time = [datetime.fromtimestamp(item['timestamp']).strftime('%d-%m-%Y %H:%M') for item in data]
+        
+        return {
+            "Time": labels_time,
+            "datasets": [
+                {
+                    "label": "Price",
+                    "data": [item['bar_sell_price'] for item in data],
+                },
+                {
+                    "label": "Bar Sell Price",
+                    "data": [item['bar_sell_price'] for item in data],
+                },
+                {
+                    "label": "Ornament Buy Price",
+                    "data": [item['ornament_buy_price'] for item in data],
+                },
+                {
+                    "label": "Ornament Sell Price",
+                    "data": [item['ornament_sell_price'] for item in data],
+                },
+                {
+                    "label": "Price Change",
+                    "data": [item['bar_price_change'] for item in data],
+                }
+            ]
+        }
+    
+    return {"labels": [], "datasets": []}
 
 def get_data_usdthb(start_ts, end_ts):
     start_dt = datetime.utcfromtimestamp(start_ts).replace(tzinfo=timezone.utc)
@@ -295,7 +377,7 @@ def create_data_goldth(start, end):
         try:
             new_data = {
                 "timestamp": timestamp,
-                "price": round(float(item.get("price", 0.0)), 2) if item.get("price") else 0.0,
+                "price": round(float(item.get("barBuyPrice", 0.0)), 2) if item.get("barBuyPrice") else 0.0,
                 "bar_sell_price": round(float(item.get("barSellPrice", 0.0)), 2) if item.get("barSellPrice") else 0.0,
                 "bar_price_change": round(float(item.get("barPriceChange", 0.0)), 2) if item.get("barPriceChange") else 0.0,
                 "ornament_buy_price": round(float(item.get("ornamentBuyPrice", 0.0)), 2) if item.get("ornamentBuyPrice") else 0.0,
@@ -358,7 +440,6 @@ def get_data_goldth(start_str, end_str):
         current_date += timedelta(days=1)
         print("current_date ++")
     return all_data
-
 
 @require_GET
 def delete_data(request):

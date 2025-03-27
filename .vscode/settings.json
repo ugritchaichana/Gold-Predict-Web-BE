@@ -11,5 +11,13 @@
             "password": "password"
         }
     ],
-    "python.pythonPath": "c:\\Users\\Ugrit\\Documents\\GitHub\\Gold-Predict-Web-BE\\.venv\\Scripts\\python.exe"
+    "python.pythonPath": "c:\\Users\\Booth\\Desktop\\Project\\KMUTNB - Final\\Gold-Predict-Web-BE\\.venv\\Scripts\\python.exe",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}"
+    ],
+    "python.linting.enabled": true,
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportMissingModuleSource": "none"
+    }
 }
