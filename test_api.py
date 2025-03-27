@@ -1,66 +1,58 @@
 import requests
+from xml.etree import ElementTree as ET
+import time
 
-base_url = "http://localhost:8000/finnomenaGold/get-gold-data/"
+# ฟังก์ชันสำหรับดึงข้อมูล sitemap
+def fetch_sitemap(url):
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.content
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching {url}: {e}")
+        return None
 
-def test_api(params, expected_status, expected_message=None):
-    response = requests.get(base_url, params=params)
-    result = {
-        "params": params,
-        "status_code": response.status_code,
-        "response": response.json()
-    }
-    if response.status_code != expected_status:
-        result["error"] = f"Expected status {expected_status}, got {response.status_code}"
-    if expected_message and expected_message not in response.text:
-        result["error"] = f"Expected message '{expected_message}', got {response.text}"
-    return result
+# ฟังก์ชันสำหรับค้นหา URL ที่เกี่ยวข้องกับทองคำ
+def find_gold_related_urls(sitemap_xml):
+    gold_urls = []
+    root = ET.fromstring(sitemap_xml)
+    
+    # ค้นหาทั้งใน sitemap หลักและ child sitemap
+    for elem in root.findall(".//{http://www.sitemaps.org/schemas/sitemap/0.9}loc"):
+        url = elem.text
+        if "gold" in url.lower():
+            gold_urls.append(url)
+    
+    return gold_urls
 
-# ทดสอบการเรียก API โดยไม่มีพารามิเตอร์ db_choice
-results = []
-results.append(test_api({}, 400, "Missing 'db_choice' parameter."))
+# ดึง Sitemap Index
+sitemap_index_url = "https://www.finnomena.com/sitemap_index.xml"
+index_content = fetch_sitemap(sitemap_index_url)
 
-# ทดสอบการเรียก API โดยใช้ db_choice ที่ไม่ถูกต้อง
-results.append(test_api({"db_choice": "2"}, 400, "Invalid 'db_choice' parameter value. Must be 0 or 1."))
+if index_content:
+    root = ET.fromstring(index_content)
+    all_sitemaps = []
+    gold_related_sitemaps = []
+    
+    # ดึงทุก sitemap URL จาก index
+    for sitemap in root.findall(".//{http://www.sitemaps.org/schemas/sitemap/0.9}sitemap"):
+        loc = sitemap.find(".//{http://www.sitemaps.org/schemas/sitemap/0.9}loc").text
+        all_sitemaps.append(loc)
+    
+    # ตรวจสอบแต่ละ sitemap ว่ามีข้อมูลทองคำหรือไม่
+    for sitemap_url in all_sitemaps:
+        print(f"Processing: {sitemap_url}")
+        sitemap_content = fetch_sitemap(sitemap_url)
+        if sitemap_content:
+            gold_urls = find_gold_related_urls(sitemap_content)
+            if gold_urls:
+                gold_related_sitemaps.extend(gold_urls)
+        time.sleep(2)  # พัก 2 วินาทีเพื่อป้องกันการถูกบล็อก
+    
+    # แสดงผลลัพธ์
+    print("\nGold-related URLs found:")
+    for url in gold_related_sitemaps:
+        print(f"- {url}")
 
-# ทดสอบการเรียก API โดยใช้ db_choice ที่ถูกต้อง แต่ไม่มีพารามิเตอร์ frame, start, end
-results.append(test_api({"db_choice": "0"}, 200))
-
-# ทดสอบการเรียก API โดยใช้ frame ที่ไม่ถูกต้อง
-results.append(test_api({"db_choice": "0", "frame": "invalid"}, 400, "Invalid 'frame' parameter."))
-
-# ทดสอบการเรียก API โดยใช้ start และ end ที่ไม่อยู่ในรูปแบบ dd-mm-yyyy
-results.append(test_api({"db_choice": "0", "start": "2023-01-01", "end": "2023-01-10"}, 400, "Invalid date format. Use 'dd-mm-yyyy'."))
-
-# ทดสอบการเรียก API โดยใช้ start ที่มากกว่า end
-results.append(test_api({"db_choice": "0", "start": "10-01-2023", "end": "01-01-2023"}, 400, "'start' date cannot be after 'end' date."))
-
-# ทดสอบการเรียก API โดยใช้ frame เป็น 1d และไม่มีข้อมูลของวันนี้
-results.append(test_api({"db_choice": "0", "frame": "1d"}, 200))
-
-# ทดสอบการเรียก API โดยใช้ frame เป็น 1d และมีข้อมูลของวันนี้
-# (ต้องมีข้อมูลของวันนี้ในฐานข้อมูล)
-results.append(test_api({"db_choice": "0", "frame": "1d"}, 200))
-
-# ทดสอบการเรียก API โดยใช้ frame เป็น 7d, 15d, 1m, 3m, 6m, 1y, 3y, all
-frames = ["7d", "15d", "1m", "3m", "6m", "1y", "3y", "all"]
-for frame in frames:
-    results.append(test_api({"db_choice": "0", "frame": frame}, 200))
-
-# ทดสอบการเรียก API โดยใช้ group_by เป็น daily และ monthly
-group_bys = ["daily", "monthly"]
-for group_by in group_bys:
-    results.append(test_api({"db_choice": "0", "group_by": group_by}, 200))
-
-# ทดสอบการเรียก API โดยใช้แคช (cache=True และ cache=False)
-results.append(test_api({"db_choice": "0", "cache": "True"}, 200))
-results.append(test_api({"db_choice": "0", "cache": "False"}, 200))
-
-# บันทึกผลการทดสอบลงในไฟล์
-with open("test_results.txt", "w") as f:
-    for result in results:
-        f.write(f"Params: {result['params']}\n")
-        f.write(f"Status Code: {result['status_code']}\n")
-        f.write(f"Response: {result['response']}\n")
-        if "error" in result:
-            f.write(f"Error: {result['error']}\n")
-        f.write("-" * 80 + "\n")
+else:
+    print("Failed to retrieve sitemap index")

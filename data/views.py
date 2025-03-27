@@ -1,10 +1,11 @@
 import cloudscraper
 import time
 import random
+import requests
 from datetime import timedelta, datetime, timezone
 from django.http import JsonResponse
 import json
-from .models import USDTHB
+from .models import USDTHB, GoldTH
 from django.views.decorators.http import require_GET, require_POST
 import pytz
 
@@ -26,11 +27,11 @@ def create_data_set(request):
         local_tz = pytz.timezone('Asia/Bangkok')
         
         if not start_str:
-            default_start = datetime(2021, 1, 1, tzinfo=local_tz)
+            default_start = (datetime.now(local_tz) - timedelta(days=3))
             start_str = default_start.strftime('%d-%m-%y')
         else:
             default_start = None
-            
+
         if not end_str:
             current_date = datetime.now(local_tz)
             end_str = current_date.strftime('%d-%m-%y')
@@ -63,8 +64,10 @@ def create_data_set(request):
 
         if select == 'USDTHB':
             data = create_data_usdthb(start_ts, end_ts)
-        elif select in ('GOLDTH', 'GOLDUS'):
-            data = f"test {select}"
+        elif select == 'GOLDTH':
+            data = create_data_goldth(start_ts, end_ts)
+        elif select == 'GOLDUS':
+            data = "test GOLDUS"
         else:
             return JsonResponse({
                 "status": "error",
@@ -80,7 +83,7 @@ def create_data_set(request):
             "default_dates_used": {
                 "start": format_date(default_start) if default_start else None,
                 "end": format_date(default_end) if default_end else None
-            }
+            },
         }, status=200)
 
     except Exception as e:
@@ -100,11 +103,11 @@ def get_data(request):
         local_tz = pytz.timezone('Asia/Bangkok')
         
         if not start_str:
-            default_start = datetime(2021, 1, 1, tzinfo=local_tz)
+            default_start = (datetime.now(local_tz) - timedelta(days=3))
             start_str = default_start.strftime('%d-%m-%y')
         else:
             default_start = None
-            
+
         if not end_str:
             current_date = datetime.now(local_tz)
             end_str = current_date.strftime('%d-%m-%y')
@@ -230,10 +233,8 @@ def get_data_usdthb(start_ts, end_ts):
 def create_data_usdthb(start, end):
     data = get_data_usdthb(start, end)
     
-    # ดึง timestamps จากข้อมูล API
     api_timestamps = [item["timestamp"] for item in data]
     
-    # ตรวจสอบข้อมูลที่มีอยู่แล้วในฐานข้อมูล
     existing_timestamps = set(USDTHB.objects.filter(
         timestamp__in=api_timestamps
     ).values_list('timestamp', flat=True))
@@ -242,7 +243,6 @@ def create_data_usdthb(start, end):
     for item in data:
         timestamp = item["timestamp"]
         
-        # ข้ามข้อมูลที่มีอยู่แล้ว
         if timestamp in existing_timestamps:
             continue
             
@@ -261,11 +261,103 @@ def create_data_usdthb(start, end):
         }
         processed_data.append(USDTHB(**processed_item))
     
-    # สร้างข้อมูลใหม่เฉพาะที่ไม่มีอยู่ในฐานข้อมูล
     if processed_data:
         USDTHB.objects.bulk_create(processed_data)
         return {"status": "success", "new_records": len(processed_data), "total_from_api": len(data)}
     return {"status": "no_new_data", "message": "All data already exists in database"}
+
+def create_data_goldth(start, end):
+    data = get_data_goldth(start, end)
+
+    api_timestamps = [item["timestamp"] for item in data]
+
+    existing_records = {record.timestamp: record for record in GoldTH.objects.filter(
+        timestamp__in=api_timestamps
+    )}
+
+    processed_data = []
+    for item in data:
+        timestamp = item["timestamp"]
+
+        if timestamp == 0:
+            created_at = item.get("createdAt")
+            if created_at:
+                dt = datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%SZ")
+                timestamp = int(dt.timestamp())
+            else:
+                continue
+
+        dt = datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)
+        tz = pytz.timezone("Asia/Bangkok")
+        dt_bangkok = dt.astimezone(tz)
+
+        try:
+            new_data = {
+                "timestamp": timestamp,
+                "price": round(float(item.get("price", 0.0)), 2) if item.get("price") else 0.0,
+                "bar_sell_price": round(float(item.get("barSellPrice", 0.0)), 2) if item.get("barSellPrice") else 0.0,
+                "bar_price_change": round(float(item.get("barPriceChange", 0.0)), 2) if item.get("barPriceChange") else 0.0,
+                "ornament_buy_price": round(float(item.get("ornamentBuyPrice", 0.0)), 2) if item.get("ornamentBuyPrice") else 0.0,
+                "ornament_sell_price": round(float(item.get("ornamentSellPrice", 0.0)), 2) if item.get("ornamentSellPrice") else 0.0,
+                "created_at": dt_bangkok,
+                "created_time": dt_bangkok.strftime("%H:%M:%S"),
+                "date": dt_bangkok.strftime("%d-%m-%y")
+            }
+
+            existing_record = existing_records.get(timestamp)
+            if existing_record:
+                for field, value in new_data.items():
+                    if getattr(existing_record, field) != value:
+                        setattr(existing_record, field, value)
+                existing_record.save()
+            else:
+                processed_data.append(GoldTH(**new_data))
+
+        except ValueError as e:
+            print(f"Skipping invalid data: {item}, error: {e}")
+            continue
+
+    if processed_data:
+        GoldTH.objects.bulk_create(processed_data)
+        return {"status": "success", "new_records": len(processed_data), "total_from_api": len(data)}
+    return {"status": "no_new_data", "message": "All data already exists in database"}
+
+def get_data_goldth(start_str, end_str):
+    print(f"check params start : {start_str} to end : {end_str}")
+    
+    if isinstance(start_str, int) or start_str.isdigit():
+        start_date = datetime.utcfromtimestamp(int(start_str))
+    else:
+        start_date = datetime.strptime(start_str, '%d-%m-%y')
+
+    if isinstance(end_str, int) or end_str.isdigit():
+        end_date = datetime.utcfromtimestamp(int(end_str))
+    else:
+        end_date = datetime.strptime(end_str, '%d-%m-%y')
+    
+    all_data = []
+    current_date = start_date
+    print(f"start : {start_date} to end : {end_date} and current_date : {current_date}")
+    
+    while current_date <= end_date:
+        date_str = current_date.strftime('%Y-%m-%d')
+        url = f'https://www.finnomena.com/fn3/api/gold/trader/history/list?date={date_str}'
+        print(f"start : {date_str} to end : {end_date} URL : {url}")
+        
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
+            
+            if data.get('statusOK') and data['data'].get('success'):
+                all_data.extend(data['data']['data'])
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching data for {date_str}: {e}")
+        
+        current_date += timedelta(days=1)
+        print("current_date ++")
+    return all_data
+
 
 @require_GET
 def delete_data(request):
@@ -312,6 +404,20 @@ def delete_data(request):
                 "deleted_count": deleted_count
             }, status=200)
         
+        elif select == 'GOLDTH':
+            deleted_count, _ = GoldTH.objects.filter(
+                timestamp__gte=start_ts,
+                timestamp__lte=end_ts
+            ).delete()
+
+            return JsonResponse({
+                "status": "success",
+                "message": f"Deleted {deleted_count} records",
+                "start_date": start_dt.strftime('%Y-%m-%d %H:%M:%S %z'),
+                "end_date": end_dt.strftime('%Y-%m-%d %H:%M:%S %z'),
+                "deleted_count": deleted_count
+            }, status=200)
+
         return JsonResponse({
             "status": "error",
             "message": "Currency not supported",
