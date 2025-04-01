@@ -22,7 +22,7 @@ services:
       REDIS_PORT: "6379"
       IS_DOCKER_ENV: "true"
     volumes:
-      - ./Gold-Predict-Web-BE:/app
+      - .:/app
     depends_on:
       - redis
     command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
