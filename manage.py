@@ -11,8 +11,8 @@ from django.core.management import execute_from_command_line
 def check_redis_connection():
     try:
         r = redis.StrictRedis(host=os.getenv('REDIS_HOST',
-                                            '35.197.132.241'
-                                            #  'localhost'
+                                            # '35.197.132.241'
+                                             'localhost'
                                             ), port=int(os.getenv('REDIS_PORT', 6379)), db=1)
         r.ping()
         print("✅ Redis connection successful!")
