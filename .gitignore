@@ -174,3 +174,4 @@ certificate
 *.pem
 ssl.conf
 /.well-known
+Security_Testing_Report-20250412-1214.json
