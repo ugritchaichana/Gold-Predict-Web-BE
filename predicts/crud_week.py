@@ -119,7 +119,11 @@ def read_week(request, week_id=None):
         formatted_data = []
         for item in data:
             if item.get(price_key) is not None:
-                labels.append(item[date_key])
+                # แปลงรูปแบบวันที่จาก yyyy-MM-dd เป็น dd-MM-yyyy
+                original_date = item[date_key]
+                date_obj = datetime.strptime(original_date, '%Y-%m-%d')
+                formatted_date = date_obj.strftime('%d-%m-%Y')
+                labels.append(formatted_date)
                 formatted_data.append(round(item[price_key], 2))
         return {'labels': labels, 'data': formatted_data}
 
