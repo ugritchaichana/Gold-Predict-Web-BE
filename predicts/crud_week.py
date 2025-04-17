@@ -21,6 +21,24 @@ def create_week(request):
         )
         return JsonResponse({'status': 'success', 'id': week.id})
 
+def delete_all_week(request):
+    if request.method == 'GET':
+        try:
+            deleted_count, _ = Week.objects.all().delete()
+            return JsonResponse({
+                'status': 'success', 
+                'message': f'All week data deleted successfully. {deleted_count} records removed.'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error', 
+                'message': f'Failed to delete all week data: {str(e)}'
+            }, status=500)
+    return JsonResponse({
+        'status': 'error', 
+        'message': 'Only DELETE method is allowed'
+    }, status=405)
+
 def update_week(request):
     week_id = request.GET.get('id')
     if not week_id:

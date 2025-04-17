@@ -16,6 +16,24 @@ def create_month(request):
         )
         return JsonResponse({'status': 'success', 'month': month.id})
 
+def delete_all_month(request):
+    if request.method == 'GET':
+        try:
+            deleted_count, _ = Month.objects.all().delete()
+            return JsonResponse({
+                'status': 'success', 
+                'message': f'All month data deleted successfully. {deleted_count} records removed.'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error', 
+                'message': f'Failed to delete all month data: {str(e)}'
+            }, status=500)
+    return JsonResponse({
+        'status': 'error', 
+        'message': 'Only DELETE method is allowed'
+    }, status=405)
+
 def read_month(request, month_id):
     try:
         month = Month.objects.get(id=month_id)

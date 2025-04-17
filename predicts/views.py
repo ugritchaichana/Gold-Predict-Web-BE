@@ -1,6 +1,6 @@
 from django.http import JsonResponse
-from .crud_week import create_week, read_week, update_week, delete_week
-from .crud_month import create_month, read_month, update_month, delete_month, read_all_months
+from .crud_week import create_week, read_week, update_week, delete_week, delete_all_week
+from .crud_month import create_month, read_month, update_month, delete_month, read_all_months, delete_all_month
 
 # Week Views
 def create_week_view(request):
@@ -20,6 +20,9 @@ def delete_week_view(request):
         return delete_week(request)
     return JsonResponse({'status': 'error', 'message': 'week_id is required'}, status=400)
 
+def delete_all_week_view(request):
+    return delete_all_week(request)
+
 # Month Views
 def create_month_view(request):
     return create_month(request)
@@ -35,3 +38,6 @@ def delete_month_view(request, month_id):
 
 def read_all_months_view(request):
     return read_all_months(request)
+
+def delete_all_month_view(request):
+    return delete_all_month(request)
