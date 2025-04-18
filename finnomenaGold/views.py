@@ -73,17 +73,25 @@ def fetch_gold_th_data(request):
         if bulk_data:
             with transaction.atomic():
                 contry_table.objects.bulk_create(bulk_data, batch_size=5000)
+        
+        # Clear memory
+        data = None
+        bulk_data = None
+        existing_timestamps = None
+        import gc
+        gc.collect()  # Force garbage collection
 
-        return JsonResponse({"message": f"Data fetched and saved successfully. {len(bulk_data)} new records added."})
+        return JsonResponse({"message": f"Data fetched and saved successfully. {len(bulk_data) if bulk_data else 0} new records added."})
     else:
         return JsonResponse({"error": "Failed to fetch data from Finnomena Gold TH API.", "status_code": response.status_code}, status=500)
 
 def fetch_gold_us_data(request):
     # initial data 
+    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2025-01-01/{currentDateTime}"
     # url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2005-01-01/{currentDateTime}"
     # initial data
-    daysAgo5 = (datetime.now() - timedelta(days=5)).strftime('%Y-%m-%d')
-    url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/{daysAgo5}/{currentDateTime}"
+    # daysAgo5 = (datetime.now() - timedelta(days=5)).strftime('%Y-%m-%d')
+    # url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/{daysAgo5}/{currentDateTime}"
     contry_table = apps.get_model('finnomenaGold', 'Gold_US')
     print(f"✅ > url us : {url}")
 
@@ -126,7 +134,15 @@ def fetch_gold_us_data(request):
             with transaction.atomic():
                 contry_table.objects.bulk_create(bulk_data, batch_size=5000)
 
-        return JsonResponse({"message": f"Data fetched and saved successfully. {len(bulk_data)} new records added."})
+        # Clear memory
+        data = None
+        results = None
+        bulk_data = None
+        existing_timestamps = None
+        import gc
+        gc.collect()  # Force garbage collection
+        
+        return JsonResponse({"message": f"Data fetched and saved successfully. {len(bulk_data) if bulk_data else 0} new records added."})
     else:
         return JsonResponse({"error": "Failed to fetch data from Finnomena Gold US API.", "status_code": response.status_code}, status=500)
 
@@ -417,6 +433,7 @@ def get_gold_data(request):
     group_by = request.GET.get('group_by', 'daily')
     use_cache = request.GET.get('cache', 'true').lower() == 'true'
     max_points = request.GET.get('max')
+    display = request.GET.get('display', None)  # New parameter for chart display
 
     try:
         if start_param:
@@ -458,11 +475,24 @@ def get_gold_data(request):
 
         table_model = apps.get_model('finnomenaGold', table_name)
 
-        cache_key = f"gold_data:{db_choice}:{frame}:{start_timeframe}:{end_timeframe}:{group_by}:{max_points}"
+        cache_key = f"gold_data:{db_choice}:{frame}:{start_timeframe}:{end_timeframe}:{group_by}:{max_points}:{display}"
         if use_cache:
             cached_data = cache.get(cache_key)
             if cached_data:
                 logging.debug(f"Cache hit for key: {cache_key}")
+                
+                if display == 'chart':
+                    return JsonResponse({
+                        "status": "success",
+                        "data": cached_data,
+                        "start_date": start_timeframe.strftime('%Y-%m-%d %H:%M:%S.000 %z') if start_timeframe else None,
+                        "end_date": end_timeframe.strftime('%Y-%m-%d %H:%M:%S.000 %z') if end_timeframe else None,
+                        "default_dates_used": {
+                            "start": start_param,
+                            "end": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f %z')
+                        }
+                    })
+                
                 return JsonResponse({
                     "cache": [{"status": "used cache", "database": "redis"}],
                     "count": len(cached_data),
@@ -542,6 +572,28 @@ def get_gold_data(request):
         logging.debug(f"Data count: {len(data)}")
         logging.debug(f"Data: {data}")
 
+        # Format data as chart if requested
+        if display == 'chart':
+            if db_choice == '0':  # Gold_TH
+                chart_data = format_chart_data_th(data)
+            elif db_choice == '1':  # Gold_US
+                chart_data = format_chart_data_us(data)
+            
+            if use_cache:
+                cache.set(cache_key, chart_data, timeout=120)  # Cache for 2 minutes
+                logging.debug(f"Cache set for key: {cache_key}")
+            
+            return JsonResponse({
+                "status": "success",
+                "data": chart_data,
+                "start_date": start_timeframe.strftime('%Y-%m-%d %H:%M:%S.000 %z') if start_timeframe else None,
+                "end_date": end_timeframe.strftime('%Y-%m-%d %H:%M:%S.000 %z') if end_timeframe else None,
+                "default_dates_used": {
+                    "start": start_param,
+                    "end": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f %z')
+                }
+            })
+        
         if use_cache:
             cache.set(cache_key, data, timeout=120)  # Cache for 2 minutes
             logging.debug(f"Cache set for key: {cache_key}")
@@ -561,3 +613,161 @@ def get_gold_data(request):
     except Exception as e:
         logging.debug(f"Exception occurred: {str(e)}")
         return JsonResponse({"error": str(e)}, status=500)
+
+def format_chart_data_th(data):
+    """
+    Format Gold_TH data for chart display
+    """
+    labels = []
+    created_at_data = []
+    timestamp_data = []
+    date_data = []
+    price_data = []
+    bar_sell_price_data = []
+    bar_price_change_data = []
+    ornament_buy_price_data = []
+    ornament_sell_price_data = []
+    
+    for item in data:
+        labels.append(item.get('date', ''))
+        
+        # Format created_at as a string if it exists
+        created_at = item.get('created_at')
+        if created_at is not None:
+            if isinstance(created_at, str):
+                created_at_data.append(created_at)
+            else:
+                created_at_data.append(str(created_at))
+        else:
+            created_at_data.append('')
+            
+        timestamp_data.append(item.get('timestamp', 0) if item.get('timestamp') is not None else 0)
+        date_data.append(item.get('date', '') if item.get('date') is not None else '')
+        price_data.append(float(item.get('price', 0)) if item.get('price') is not None else 0)
+        bar_sell_price_data.append(float(item.get('bar_sell_price', 0)) if item.get('bar_sell_price') is not None else 0)
+        bar_price_change_data.append(float(item.get('bar_price_change', 0)) if item.get('bar_price_change') is not None else 0)
+        ornament_buy_price_data.append(float(item.get('ornament_buy_price', 0)) if item.get('ornament_buy_price') is not None else 0)
+        ornament_sell_price_data.append(float(item.get('ornament_sell_price', 0)) if item.get('ornament_sell_price') is not None else 0)
+    
+    return {
+        "labels": labels,
+        "datasets": [
+            {
+                "label": "Created At",
+                "data": created_at_data
+            },
+            {
+                "label": "Timestamp",
+                "data": timestamp_data
+            },
+            {
+                "label": "Date",
+                "data": date_data
+            },
+            {
+                "label": "Price",
+                "data": price_data
+            },
+            {
+                "label": "Bar Sell Price",
+                "data": bar_sell_price_data
+            },
+            {
+                "label": "Bar Price Change",
+                "data": bar_price_change_data
+            },
+            {
+                "label": "Ornament Buy Price",
+                "data": ornament_buy_price_data
+            },
+            {
+                "label": "Ornament Sell Price",
+                "data": ornament_sell_price_data
+            }
+        ]
+    }
+
+def format_chart_data_us(data):
+    """
+    Format Gold_US data for chart display
+    """
+    labels = []
+    created_at_data = []
+    timestamp_data = []
+    date_data = []
+    price_data = []
+    close_price_data = []
+    high_price_data = []
+    low_price_data = []
+    volume_data = []
+    volume_weight_avg_data = []
+    num_transactions_data = []
+    
+    for item in data:
+        labels.append(item.get('date', ''))
+        
+        # Format created_at as a string if it exists
+        created_at = item.get('created_at')
+        if created_at is not None:
+            if isinstance(created_at, str):
+                created_at_data.append(created_at)
+            else:
+                created_at_data.append(str(created_at))
+        else:
+            created_at_data.append('')
+            
+        timestamp_data.append(item.get('timestamp', 0) if item.get('timestamp') is not None else 0)
+        date_data.append(item.get('date', '') if item.get('date') is not None else '')
+        price_data.append(float(item.get('price', 0)) if item.get('price') is not None else 0)
+        close_price_data.append(float(item.get('close_price', 0)) if item.get('close_price') is not None else 0)
+        high_price_data.append(float(item.get('high_price', 0)) if item.get('high_price') is not None else 0)
+        low_price_data.append(float(item.get('low_price', 0)) if item.get('low_price') is not None else 0)
+        volume_data.append(float(item.get('volume', 0)) if item.get('volume') is not None else 0)
+        volume_weight_avg_data.append(float(item.get('volume_weight_avg', 0)) if item.get('volume_weight_avg') is not None else 0)
+        num_transactions_data.append(int(item.get('num_transactions', 0)) if item.get('num_transactions') is not None else 0)
+    
+    return {
+        "labels": labels,
+        "datasets": [
+            {
+                "label": "Created At",
+                "data": created_at_data
+            },
+            {
+                "label": "Timestamp",
+                "data": timestamp_data
+            },
+            {
+                "label": "Date",
+                "data": date_data
+            },
+            {
+                "label": "Price",
+                "data": price_data
+            },
+            {
+                "label": "Close Price",
+                "data": close_price_data
+            },
+            {
+                "label": "High Price",
+                "data": high_price_data
+            },
+            {
+                "label": "Low Price",
+                "data": low_price_data
+            },
+            {
+                "label": "Volume",
+                "data": volume_data
+            },
+            {
+                "label": "Volume Weighted Average",
+                "data": volume_weight_avg_data
+            },
+            {
+                "label": "Number of Transactions",
+                "data": num_transactions_data
+            }
+        ]
+    }
