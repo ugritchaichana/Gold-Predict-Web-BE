@@ -590,13 +590,16 @@ def get_gold_data(request):
         if display == 'chart':
             if db_choice == '0':  # Gold_TH
                 chart_data = format_chart_data_th(data)
+                if use_cache:
+                    chart_data_serialized = convert_dates_to_str(chart_data)
+                    cache.set(cache_key, chart_data_serialized, timeout=CACHE_TIMEOUT)
+                    logging.debug(f"Cache set for key: {cache_key}")
             elif db_choice == '1':  # Gold_US
                 chart_data = format_chart_data_us(data)
                 if use_cache:
                     chart_data_serialized = convert_dates_to_str(chart_data)
                     cache.set(cache_key, chart_data_serialized, timeout=CACHE_TIMEOUT)
                     logging.debug(f"Cache set for key: {cache_key}")
-            
             return JsonResponse({
                 "status": "success",
                 "data": chart_data,
@@ -665,38 +668,14 @@ def format_chart_data_th(data):
     return {
         "labels": labels,
         "datasets": [
-            {
-                "label": "Created At",
-                "data": created_at_data
-            },
-            {
-                "label": "Timestamp",
-                "data": timestamp_data
-            },
-            {
-                "label": "Date",
-                "data": date_data
-            },
-            {
-                "label": "Price",
-                "data": price_data
-            },
-            {
-                "label": "Bar Sell Price",
-                "data": bar_sell_price_data
-            },
-            {
-                "label": "Bar Price Change",
-                "data": bar_price_change_data
-            },
-            {
-                "label": "Ornament Buy Price",
-                "data": ornament_buy_price_data
-            },
-            {
-                "label": "Ornament Sell Price",
-                "data": ornament_sell_price_data
-            }
+            { "label": "Created At", "data": created_at_data },
+            { "label": "Timestamp", "data": timestamp_data },
+            { "label": "Date", "data": date_data },
+            { "label": "Price", "data": price_data },
+            { "label": "Bar Sell Price", "data": bar_sell_price_data },
+            { "label": "Bar Price Change", "data": bar_price_change_data },
+            { "label": "Ornament Buy Price", "data": ornament_buy_price_data },
+            { "label": "Ornament Sell Price", "data": ornament_sell_price_data }
         ]
     }
 
