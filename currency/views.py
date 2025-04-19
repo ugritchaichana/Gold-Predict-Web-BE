@@ -19,6 +19,9 @@ import logging
 from django.conf import settings
 import gc
 
+# Set cache timeout (in seconds)
+CACHE_TIMEOUT = 3600  # 1 hour
+
 logger = logging.getLogger(__name__)
 
 
@@ -483,6 +486,17 @@ def apply_max(data, max_val):
         return selected
     return data
 
+def convert_dates_to_str(obj):
+    import datetime
+    if isinstance(obj, dict):
+        return {k: convert_dates_to_str(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_dates_to_str(i) for i in obj]
+    elif isinstance(obj, (datetime.date, datetime.datetime)):
+        return obj.isoformat()
+    else:
+        return obj
+
 def get_currency_data(request):
     frame = request.GET.get('frame', None)
     start_date = request.GET.get('start', None)
@@ -491,7 +505,7 @@ def get_currency_data(request):
     max_points = request.GET.get('max')  # Add max parameter support
     display = request.GET.get('display')  # Add display parameter for chart view
 
-    cache_time = 3600  # Cache time in seconds (1 hour)
+    # Using the global CACHE_TIMEOUT constant
     use_cache = request.GET.get('cache', 'True').lower() != 'false'
 
     try:
@@ -528,29 +542,38 @@ def get_currency_data(request):
             start_date = None
         else:
             return JsonResponse({"error": "Invalid 'frame' parameter."}, status=400)
-        
-    # Cache key - include max_points in cache key
-    cache_key = f"currency_data:{start_date}:{end_date}:{frame}:{group_by}:{max_points}"
+          # Cache key - include all parameters that affect the result
+    cache_key = f"currency_data:{start_date}:{end_date}:{frame}:{group_by}:{max_points}:{display}"
     logger.info(f"Generated cache key: {cache_key}")
 
     # Check Cache first
-    cache_status = "None"
-    cache_used = "PostgreSQL"
     if use_cache:
         cached_data = cache.get(cache_key)
         if cached_data:
             try:
                 cached_data = json.loads(cached_data)
                 logger.info(f"Cache hit: Using cached data for key: {cache_key}")
-                cache_status = cache_key
-                cache_used = "redis"  # If cache is used, set to "redis"
-                # Return result from Redis with consistent fields
-                return JsonResponse({
-                    "cache_used": cache_used,
-                    "cache": cache_status,
-                    "count": len(cached_data["data"]),
-                    "data": cached_data["data"]
-                }, status=200)
+                
+                # If the request is for chart data
+                if display == 'chart' and "chart_data" in cached_data:
+                    return JsonResponse({
+                        "status": "success",
+                        "data": cached_data["chart_data"],
+                        "start_date": start_date.strftime('%Y-%m-%d') if start_date else None,
+                        "end_date": end_date.strftime('%Y-%m-%d') if end_date else None,
+                        "default_dates_used": {
+                            "start": start_date.strftime('%d-%m-%Y') if start_date else None,
+                            "end": end_date.strftime('%d-%m-%Y') if end_date else None
+                        }
+                    })
+                
+                # For regular data
+                if "data" in cached_data:
+                    return JsonResponse({
+                        "cache": [{"status": "used cache", "database": "redis"}],
+                        "count": len(cached_data["data"]),
+                        "data": cached_data["data"]
+                    })
             except json.JSONDecodeError:
                 logger.warning(f"Cache data corrupted for key: {cache_key}, ignoring cache.")
 
@@ -606,35 +629,14 @@ def get_currency_data(request):
             data = apply_max(data, max_points)
 
     else:
-        return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)
-
-    # Store the result in cache    # Format data as chart if requested
+        return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)    # Format data for chart if requested
     if display == 'chart':
         chart_data = format_chart_data_usdthb(data)
         
         if use_cache:
-            # แปลง Python Object เป็น JSON String ก่อนเก็บเข้า Redis
-            cache.set(cache_key, json.dumps({"chart_data": chart_data}), timeout=cache_time)
+            chart_data_serialized = convert_dates_to_str(chart_data)
+            cache.set(cache_key, json.dumps({"chart_data": chart_data_serialized}), timeout=CACHE_TIMEOUT)
             logger.info(f"Cached chart data for key: {cache_key}")
-        
-        return JsonResponse({
-            "status": "success",
-            "data": chart_data,
-            "start_date": start_date.strftime('%Y-%m-%d') if start_date else None,
-            "end_date": end_date.strftime('%Y-%m-%d') if end_date else None,
-            "default_dates_used": {
-                "start": start_date.strftime('%d-%m-%Y') if start_date else None,
-                "end": end_date.strftime('%d-%m-%Y') if end_date else None
-            }
-        })
-      # Format data for chart if requested
-    if display == 'chart':
-        chart_data = format_chart_data_usdthb(data)
-        
-        if use_cache:
-            # แปลง Python Object เป็น JSON String ก่อนเก็บเข้า Redis
-            cache.set(cache_key + ":chart", json.dumps({"chart_data": chart_data}), timeout=cache_time)
-            logger.info(f"Cached chart data for key: {cache_key}:chart")
         
         return JsonResponse({
             "status": "success",
@@ -648,18 +650,18 @@ def get_currency_data(request):
         })
     
     # For regular data display
+    serialized_data = serialize_data(data)
+    
     if use_cache:
-        # แปลง Python Object เป็น JSON String ก่อนเก็บเข้า Redis
-        cache.set(cache_key, json.dumps({"data": serialize_data(data)}), timeout=cache_time)
+        # Convert Python Object to JSON String before storing in Redis
+        cache.set(cache_key, json.dumps({"data": serialized_data}), timeout=CACHE_TIMEOUT)
         logger.info(f"Cached data for key: {cache_key}")
-        cache_status = cache_key  # Set cache key after caching data
 
     # Return response with the cache source
     return JsonResponse({
-        "cache_used": cache_used,
-        "cache": cache_status,
-        "count": len(data),
-        "data": serialize_data(data)
+        "cache": [{"status": "no used cache", "database": "postgresql"}],
+        "count": len(serialized_data),
+        "data": serialized_data
     })
 
 def format_chart_data_usdthb(data):

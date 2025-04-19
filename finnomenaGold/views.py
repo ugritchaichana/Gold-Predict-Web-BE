@@ -9,6 +9,9 @@ from django.core.cache import cache
 import logging
 import decimal
 
+# Set cache timeout (in seconds)
+CACHE_TIMEOUT = 3600  # 1 hour
+
 logging.basicConfig(level=logging.DEBUG)
 currentDateTime = datetime.now().strftime('%Y-%m-%d')
 
@@ -90,7 +93,7 @@ def fetch_gold_us_data(request):
     # url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2025-01-01/{currentDateTime}"
     # url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/2005-01-01/{currentDateTime}"
     # initial data
-    
+
     url = f"https://www.finnomena.com/fn3/api/polygon/gold/spot/v2/aggs/ticker/C%3AXAUUSD/range/1/day/{(datetime.now()-timedelta(days=5)).strftime('%Y-%m-%d')}/{currentDateTime}"
     contry_table = apps.get_model('finnomenaGold', 'Gold_US')
     print(f"✅ > url us : {url}")
@@ -365,8 +368,8 @@ def get_gold_by_id(request, id=None):
                 field_value = float(field_value)
                 
             data[field_name] = field_value
-        
-        cache.set(cache_key, data, timeout=120)  # Cache for 2 minutes
+            
+        cache.set(cache_key, data, timeout=CACHE_TIMEOUT)  # Cache using standard timeout
         logging.debug(f"Cache set for key: {cache_key}")
         
         return JsonResponse({
@@ -410,6 +413,17 @@ def apply_max(data, max_val):
         
         return selected
     return data
+
+def convert_dates_to_str(obj):
+    import datetime
+    if isinstance(obj, dict):
+        return {k: convert_dates_to_str(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_dates_to_str(i) for i in obj]
+    elif isinstance(obj, (datetime.date, datetime.datetime)):
+        return obj.isoformat()
+    else:
+        return obj
 
 def get_gold_data(request):
     logging.debug("Entering get_gold_data function")
@@ -578,10 +592,10 @@ def get_gold_data(request):
                 chart_data = format_chart_data_th(data)
             elif db_choice == '1':  # Gold_US
                 chart_data = format_chart_data_us(data)
-            
-            if use_cache:
-                cache.set(cache_key, chart_data, timeout=120)  # Cache for 2 minutes
-                logging.debug(f"Cache set for key: {cache_key}")
+                if use_cache:
+                    chart_data_serialized = convert_dates_to_str(chart_data)
+                    cache.set(cache_key, chart_data_serialized, timeout=CACHE_TIMEOUT)
+                    logging.debug(f"Cache set for key: {cache_key}")
             
             return JsonResponse({
                 "status": "success",
@@ -594,9 +608,8 @@ def get_gold_data(request):
                 }
             })
         
-        if use_cache:
-            cache.set(cache_key, data, timeout=120)  # Cache for 2 minutes
-            logging.debug(f"Cache set for key: {cache_key}")
+        if use_cache:        cache.set(cache_key, data, timeout=CACHE_TIMEOUT)  # Cache using standard timeout
+        logging.debug(f"Cache set for key: {cache_key}")
 
         return JsonResponse({
             "cache": [{"status": "no used cache", "database": "postgresql"}],
@@ -729,45 +742,15 @@ def format_chart_data_us(data):
     return {
         "labels": labels,
         "datasets": [
-            {
-                "label": "Created At",
-                "data": created_at_data
-            },
-            {
-                "label": "Timestamp",
-                "data": timestamp_data
-            },
-            {
-                "label": "Date",
-                "data": date_data
-            },
-            {
-                "label": "Price",
-                "data": price_data
-            },
-            {
-                "label": "Close Price",
-                "data": close_price_data
-            },
-            {
-                "label": "High Price",
-                "data": high_price_data
-            },
-            {
-                "label": "Low Price",
-                "data": low_price_data
-            },
-            {
-                "label": "Volume",
-                "data": volume_data
-            },
-            {
-                "label": "Volume Weighted Average",
-                "data": volume_weight_avg_data
-            },
-            {
-                "label": "Number of Transactions",
-                "data": num_transactions_data
-            }
+            { "label": "Created At", "data": created_at_data },
+            { "data": timestamp_data },
+            { "label": "Date", "data": date_data },
+            { "label": "Price", "data": price_data },
+            { "label": "Close Price", "data": close_price_data },
+            { "label": "High Price", "data": high_price_data },
+            { "label": "Low Price", "data": low_price_data },
+            { "label": "Volume", "data": volume_data },
+            { "label": "Volume Weighted Average", "data": volume_weight_avg_data },
+            { "label": "Number of Transactions", "data": num_transactions_data }
         ]
     }
