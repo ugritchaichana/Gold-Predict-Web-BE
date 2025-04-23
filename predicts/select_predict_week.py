@@ -9,7 +9,6 @@ def get_select_predict_week(request):
         date_param=request.GET.get('date')
         if not date_param:
             return JsonResponse({'error': 'Missing date parameter'}, status=400)
-
         try:
             # แปลง string เป็น datetime object
             date_obj = datetime.strptime(date_param, '%d-%m-%Y').date()
@@ -36,5 +35,17 @@ def get_select_predict_week(request):
             'predict_data': list(week_data_predict),
             'actual_data': list(week_data_actual)
         }, safe=False)
+    
+    return JsonResponse({'error': 'GET method required'}, status=405)
+
+def get_predict_date(request):
+    if request.method == 'GET':
+
+        # ค้นหา record ที่มี date ตรงกับที่ส่งมา
+        week_data_predict = Week.objects.all().values('date')
+
+        if not week_data_predict:
+            return JsonResponse({'error': 'No Predict data found for the given date'}, status=404)
+        return JsonResponse(list(week_data_predict), safe=False)
     
     return JsonResponse({'error': 'GET method required'}, status=405)
