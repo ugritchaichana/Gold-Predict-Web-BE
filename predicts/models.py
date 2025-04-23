@@ -11,7 +11,7 @@ class Week(models.Model):
     price_5 = models.FloatField(null=True)
     price_6 = models.FloatField(null=True)
     price_7 = models.FloatField(null=True)
-    date_1  = models.CharField(max_length=16,null=True)
+    date_1 = models.CharField(max_length=16,null=True)
     date_2 = models.CharField(max_length=16,null=True)
     date_3 = models.CharField(max_length=16,null=True)
     date_4 = models.CharField(max_length=16,null=True)
