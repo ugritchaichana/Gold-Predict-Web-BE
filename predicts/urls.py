@@ -4,6 +4,7 @@ from .views import (
     create_month_view, read_month_view, update_month_view, delete_month_view, read_all_months_view, delete_all_month_view
 )
 from .test.read import read
+from .get_week import get_week
 
 urlpatterns = [
     # Week CRUD URLs
@@ -12,6 +13,9 @@ urlpatterns = [
     path('week/update/', update_week_view, name='update_week'),
     path('week/delete/', delete_week_view, name='delete_week'),
     path('week/delete_all/', delete_all_week_view, name='delete_all_week'),
+
+    path('week/get_week/', get_week, name='get_week'),
+
 
     # path('week/test/read/', read, name='read'),
 
