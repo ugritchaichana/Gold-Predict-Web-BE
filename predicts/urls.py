@@ -5,6 +5,7 @@ from .views import (
 )
 from .test.read import read
 from .get_week import get_week
+from .select_predict_week import get_select_predict_week
 
 urlpatterns = [
     # Week CRUD URLs
@@ -15,7 +16,7 @@ urlpatterns = [
     path('week/delete_all/', delete_all_week_view, name='delete_all_week'),
 
     path('week/get_week/', get_week, name='get_week'),
-
+    path('week/select_predict/',get_select_predict_week),
 
     # path('week/test/read/', read, name='read'),
 
