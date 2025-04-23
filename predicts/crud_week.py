@@ -16,6 +16,13 @@ def create_week(request):
             price_5=data.get('price_5'),
             price_6=data.get('price_6'),
             price_7=data.get('price_7'),
+            date_1=data.get('date_1'),
+            date_2=data.get('date_2'),
+            date_3=data.get('date_3'),
+            date_4=data.get('date_4'),
+            date_5=data.get('date_5'),
+            date_6=data.get('date_6'),
+            date_7=data.get('date_7'),
             date=data.get('date'),
             created_at=data.get('created_at'),
         )
