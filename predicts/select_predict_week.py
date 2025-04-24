@@ -41,17 +41,16 @@ def get_select_predict_week(request):
                     "actual_data": ''}]
                 cache.set(cache_key,result , timeout=CACHE_TIMEOUT)
                 return JsonResponse(list(result), safe=False)
-            for i in range(7):
-                buff_result=[{"label":"Created At",
-                            "data":week_data_actual[i]['created_at']},
+            for i in week_data_actual:
+                result.append([{"label":"Created At",
+                            "data":i['created_at']},
                             {"label":"Timestamp",
-                            "data":week_data_actual[i]['timestamp']},
+                            "data":i['timestamp']},
                             {"label":"Date",
-                            "data":week_data_actual[i]['date']},
+                            "data":i['date']},
                             {"label":"Price",
-                            "data":week_data_actual[i]['price']}
-                            ]
-                result.append(buff_result)
+                            "data":i['price']}
+                            ])
             result=[{"status": "success",
                      "predict_data": list(week_data_predict),
                     "actual_data": list(result)}]
