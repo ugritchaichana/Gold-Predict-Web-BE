@@ -745,3 +745,17 @@ def format_chart_data_us(data):
             { "label": "Number of Transactions", "data": num_transactions_data }
         ]
     }
+## ข้ามวันอาทิตย์
+
+def subtract_7_days_skipping_sundays(end_date,day):
+    days_counted = 0
+    current = end_date
+    result = []
+
+    while days_counted < day:
+        if current.weekday() != 6:  # 6 = วันอาทิตย์
+            result.append(current)
+            days_counted += 1
+        current -= timedelta(days=1)
+
+    return min(result)  # คืนวันเริ่มต้น (วันแรกจาก 7 วันไม่รวมอาทิตย์)
