@@ -54,7 +54,7 @@ def read_month(request, month_id):
 
 def read_all_months(request):
     if request.method == 'GET':
-        months = Month.objects.all().order_by('-timestamp')
+        months = Month.objects.all().order_by('timestamp')
         month_list = [
             {
                 'timestamp': month.timestamp,
