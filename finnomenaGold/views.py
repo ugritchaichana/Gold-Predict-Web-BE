@@ -8,6 +8,7 @@ from django.db import transaction
 from django.core.cache import cache
 import logging
 import decimal
+from collections import OrderedDict
 
 # Set cache timeout (in seconds)
 CACHE_TIMEOUT = 3600  # 1 hour
@@ -553,6 +554,16 @@ def get_gold_data(request):
         if group_by == "daily":
             queryset = queryset.order_by('created_at')
             data = list(queryset.values())
+            data_sorted = sorted(data, key=lambda x: x['created_at'], reverse=True)
+
+            unique_by_day = OrderedDict()
+            for row in data_sorted:
+                day = row['created_at'].date()
+                if day not in unique_by_day:
+                    unique_by_day[day] = row
+
+            # 🔽 เรียงวันจากน้อยไปมาก
+            data = sorted(unique_by_day.values(), key=lambda x: x['created_at'].date())
             
             # Apply max parameter to limit data points if provided
             if max_points:
@@ -585,6 +596,7 @@ def get_gold_data(request):
 
         logging.debug(f"Data count: {len(data)}")
         logging.debug(f"Data: {data}")
+
 
         # Format data as chart if requested
         if display == 'chart':
