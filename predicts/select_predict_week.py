@@ -57,10 +57,16 @@ def get_select_predict_week(request):
                     "actual_data": list(result)}]
             cache.set(cache_key,result , timeout=CACHE_TIMEOUT)
             return JsonResponse(list(result), safe=False)
+
         if not week_data_predict:
             return JsonResponse({'error': 'No Predict data found for the given date'}, status=404)
-        elif not week_data_actual:
-            return JsonResponse({'error': 'No Actual data found for the given date'}, status=404)
+        
+        if not week_data_actual:
+                result=[{"status": "success",
+                     "predict_data": list(week_data_predict),
+                    "actual_data": ''}]
+                cache.set(cache_key,result , timeout=CACHE_TIMEOUT)
+                return JsonResponse(list(result), safe=False)
         result=[{"status": "success",
             "predict_data": list(week_data_predict),
             "actual_data": list(week_data_actual)}]
