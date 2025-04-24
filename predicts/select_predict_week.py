@@ -18,7 +18,7 @@ def get_select_predict_week(request):
             return JsonResponse({'error': 'Invalid date format, should be DD-MM-YYYY'}, status=400)
         display = request.GET.get('display')
         use_cache = request.GET.get('cache', 'true').lower() == 'true'
-        cache_key = f"get_select_predict:{display}"
+        cache_key = f"get_select_predict:{display}{date_obj}"
         if use_cache:
             cached_data = cache.get(cache_key)
             if cached_data:
@@ -35,6 +35,12 @@ def get_select_predict_week(request):
                 week_data_actual.append(gold_buff)
         if display == 'chart':
             result=[]
+            if not week_data_actual:
+                result=[{"status": "success",
+                     "predict_data": list(week_data_predict),
+                    "actual_data": ''}]
+                cache.set(cache_key,result , timeout=CACHE_TIMEOUT)
+                return JsonResponse(list(result), safe=False)
             for i in range(7):
                 buff_result=[{"label":"Created At",
                             "data":week_data_actual[i]['created_at']},
