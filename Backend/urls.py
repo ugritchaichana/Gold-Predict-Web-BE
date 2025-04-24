@@ -1,5 +1,5 @@
 from django.urls import path,include
-from .views import test_gcp_connection_view, view_files_bucket
+from .views import test_gcp_connection_view, view_files_bucket, clear_redis_cache
 from django.http import HttpResponse
 
 def health_check(request):
@@ -15,5 +15,5 @@ urlpatterns = [
     path('predicts/', include('predicts.urls')),
     path('health/', health_check, name='health_check'),
     path('data/', include('data.urls')),
-
+    path('redis/clear/', clear_redis_cache, name='clear_redis_cache'),
 ]

@@ -29,3 +29,6 @@ class Month(models.Model):
     date = models.CharField(max_length=16,null=True)
     created_at = models.DateTimeField(null=True)
     month_predict = models.CharField(max_length=16,null=True)
+    price_high = models.FloatField(null=True)
+    price_low = models.FloatField(null=True)
+    price_open = models.FloatField(null=True)

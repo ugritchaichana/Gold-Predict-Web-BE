@@ -63,7 +63,10 @@ def read_all_months(request):
                 'low': month.low,
                 'date': month.date,
                 'created_at': month.created_at,
-                'month_predict': month.month_predict
+                'month_predict': month.month_predict,
+                'actual_open':month.price_open,
+                'actual_high':month.price_high,
+                'actual_low':month.price_low
             }
             for month in months
         ]
