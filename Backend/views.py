@@ -1,6 +1,7 @@
 from google.cloud import storage
 from django.conf import settings
 from django.http import JsonResponse
+from django.core.cache import cache
 
 def test_gcp_connection():
     try:
@@ -60,3 +61,10 @@ def view_files_bucket(request):
             'status': 'error',
             'message': str(e)
         }, status=500)
+
+def clear_redis_cache(request):
+    try:
+        cache.clear()
+        return JsonResponse({'status': 'success', 'message': 'Redis cache cleared successfully.'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
