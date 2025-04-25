@@ -1,7 +1,8 @@
 from django.http import JsonResponse
 from .models import Month
 import json
-
+from django.core.cache import cache
+CACHE_TIMEOUT = 3600
 def create_month(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -54,22 +55,53 @@ def read_month(request, month_id):
 
 def read_all_months(request):
     if request.method == 'GET':
-        months = Month.objects.all().order_by('timestamp')
-        month_list = [
-            {
-                'timestamp': month.timestamp,
-                'open': month.open,
-                'high': month.high,
-                'low': month.low,
-                'date': month.date,
-                'created_at': month.created_at,
-                'month_predict': month.month_predict,
-                'actual_open':month.price_open,
-                'actual_high':month.price_high,
-                'actual_low':month.price_low
-            }
-            for month in months
-        ]
+        use_cache = request.GET.get('cache', 'true').lower() == 'true'
+        display = request.GET.get('display')
+        cache_key = f"read_all_month:{display}"
+        if use_cache:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                return JsonResponse(cached_data, safe=False)
+        month_list=[]
+        if display == 'table':
+
+            months = Month.objects.all().order_by('timestamp')
+            month_list = [
+                {
+                    'timestamp': month.timestamp,
+                    'open': month.open,
+                    'high': month.high,
+                    'low': month.low,
+                    'date': month.date,
+                    'created_at': month.created_at,
+                    'month_predict': month.month_predict,
+                    'actual_open':month.price_open,
+                    'actual_high':month.price_high,
+                    'actual_low':month.price_low
+                }
+                for month in months
+            ]
+        
+        elif display == 'chart':
+            months = Month.objects.all().order_by('-timestamp')
+            month_list = [
+                {
+                    'timestamp': month.timestamp,
+                    'open': month.open,
+                    'high': month.high,
+                    'low': month.low,
+                    'date': month.date,
+                    'created_at': month.created_at,
+                    'month_predict': month.month_predict,
+                    'actual_open':month.price_open,
+                    'actual_high':month.price_high,
+                    'actual_low':month.price_low
+                }
+                for month in months
+            ]
+        if not month_list:
+                return JsonResponse({'error':'No data'})
+        cache.set(cache_key,month_list , timeout=CACHE_TIMEOUT)
         return JsonResponse({'status': 'success', 'months': month_list})
 
 def update_month(request, month_id):

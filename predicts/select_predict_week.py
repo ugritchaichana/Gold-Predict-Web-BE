@@ -8,7 +8,14 @@ from finnomenaGold.models import Gold_TH
 CACHE_TIMEOUT = 3600
 def get_select_predict_week(request):
     if request.method == 'GET':
+        display = request.GET.get('display')
         date_param=request.GET.get('date')
+        use_cache = request.GET.get('cache', 'true').lower() == 'true'
+        cache_key = f"get_select_predict:{display}{date_param}"
+        if use_cache:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                return JsonResponse(cached_data, safe=False)
         if not date_param:
             return JsonResponse({'error': 'Missing date parameter'}, status=400)
         try:
@@ -16,13 +23,7 @@ def get_select_predict_week(request):
             date_obj = datetime.strptime(date_param, '%d-%m-%Y').date()
         except ValueError:
             return JsonResponse({'error': 'Invalid date format, should be DD-MM-YYYY'}, status=400)
-        display = request.GET.get('display')
-        use_cache = request.GET.get('cache', 'true').lower() == 'true'
-        cache_key = f"get_select_predict:{display}{date_obj}"
-        if use_cache:
-            cached_data = cache.get(cache_key)
-            if cached_data:
-                return JsonResponse(cached_data, safe=False)
+
         # ค้นหา record ที่มี date ตรงกับที่ส่งมา
         week_data_predict = Week.objects.filter(date=date_obj).values()
         week_data_actual = []
