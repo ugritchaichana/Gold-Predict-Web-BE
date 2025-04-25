@@ -56,7 +56,7 @@ def read_month(request, month_id):
 def read_all_months(request):
     if request.method == 'GET':
         use_cache = request.GET.get('cache', 'true').lower() == 'true'
-        display = request.GET.get('display')
+        display = request.GET.get('display','table').lower()
         cache_key = f"read_all_month:{display}"
         if use_cache:
             cached_data = cache.get(cache_key)
