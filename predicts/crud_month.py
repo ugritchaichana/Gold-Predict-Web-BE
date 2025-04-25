@@ -65,7 +65,7 @@ def read_all_months(request):
         month_list=[]
         if display == 'table':
 
-            months = Month.objects.all().order_by('timestamp')
+            months = Month.objects.all().order_by('-timestamp')
             month_list = [
                 {
                     'timestamp': month.timestamp,
@@ -83,7 +83,7 @@ def read_all_months(request):
             ]
         
         elif display == 'chart':
-            months = Month.objects.all().order_by('-timestamp')
+            months = Month.objects.all().order_by('timestamp')
             month_list = [
                 {
                     'timestamp': month.timestamp,
