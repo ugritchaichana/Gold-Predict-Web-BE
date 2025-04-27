@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'data',
     'logging_app',
     'django_extensions',
+    'Utility',
 ]
 
 if os.environ.get('IS_DOCKER_ENV') == 'true':

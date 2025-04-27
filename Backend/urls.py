@@ -16,4 +16,5 @@ urlpatterns = [
     path('health/', health_check, name='health_check'),
     path('data/', include('data.urls')),
     path('redis/clear/', clear_redis_cache, name='clear_redis_cache'),
+    path('Utility/',include('Utility.urls')),
 ]
