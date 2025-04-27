@@ -34,6 +34,7 @@ def set_cache(request):
             ]
             for index_date in range(len(new_dates_list)):
                  to_request.GET=QueryDict(f'date={new_dates_list[index_date]}&display=chart')
+                 get_select_predict_week(to_request)
             return JsonResponse({'statue':'success'})
         except:
             return JsonResponse({'error':'cannot set cache'})
