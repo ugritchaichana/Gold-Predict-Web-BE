@@ -2,7 +2,7 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from finnomenaGold.views import get_gold_data
 from currency.views import get_currency_data
-from predicts.select_predict_week import get_predict_date,get_select_predict_week
+from predicts.select_predict_week import set_cache_select_predict
 import requests
 from django.http import HttpRequest, QueryDict
 from datetime import datetime
@@ -14,7 +14,7 @@ gold_query_frame=['7d',
                   'all']
 def set_cache(request):
     if request.method=='GET':
-        try:
+        # try:
             to_request = HttpRequest    
             to_request.method='GET'
             for index_choice in range(len(gold_query_choice)):
@@ -26,15 +26,8 @@ def set_cache(request):
                 get_currency_data(to_request)
             to_request = HttpRequest    
             to_request.method='GET'
-            res = get_predict_date(to_request)
-            dates_list = [item['date'] for item in json.loads(res.content)]
-            new_dates_list = [
-                datetime.strptime(date_str, "%Y-%m-%d").strftime("%d-%m-%Y")
-                for date_str in dates_list
-            ]
-            for index_date in range(len(new_dates_list)):
-                 to_request.GET=QueryDict(f'date={new_dates_list[index_date]}&display=chart')
-                 get_select_predict_week(to_request)
+            to_request.GET=QueryDict(f'display=chart')
+            set_cache_select_predict(to_request)
             return JsonResponse({'statue':'success'})
-        except:
-            return JsonResponse({'error':'cannot set cache'})
+        # except:
+        #     return JsonResponse({'error':'cannot set cache'})
