@@ -167,9 +167,9 @@ def set_cache_select_predict(request):
 
         if not week_data_actual:
             # ถ้าไม่มี actual data
-            result = ['[',{
+            result = [{
                 "status": "success",
-                "predict_data": dict(predict),   # <-- ต้องใช้ dict() ไม่ใช่ list()
+                "predict_data": [predict],   # <-- ต้องใช้ dict() ไม่ใช่ list()
                 "actual_data": ''
             }]
         else:
@@ -185,7 +185,7 @@ def set_cache_select_predict(request):
 
             result = [{
                 "status": "success",
-                "predict_data": dict(predict),  # <-- แก้ list เป็น dict
+                "predict_data": [predict],  # <-- แก้ list เป็น dict
                 "actual_data": actual_result
             }]
 
