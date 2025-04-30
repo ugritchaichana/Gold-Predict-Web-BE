@@ -10,7 +10,10 @@ def get_week(request):
     if request.method == 'GET':
         display = request.GET.get('display')
         use_cache = request.GET.get('cache', 'true').lower() == 'true'
-        cache_key = f"get_week:{display}"
+        get_model = request.GET.get('model','1').lower()
+        if get_model not in [str(i) for i in range(1, 8 + 1)]:
+            return JsonResponse({'error': 'model must be a number between 1 and 8'}, status=400)
+        cache_key = f"get_week:{display}{get_model}"
         if use_cache:
             cached_data = cache.get(cache_key)
             if cached_data:
@@ -19,41 +22,53 @@ def get_week(request):
         if display == 'chart':
             labels = []
             data = []
-            for i, w in enumerate(weeks):
-                if i == len(weeks) - 1:
-                    for d in range(1, 8):
-                        labels.append(w[f'date_{d}'])
-                        data.append(w[f'price_{d}'])
-                else:
-                    labels.append(w['date_1'])
-                    data.append(w['price_1'])
+            today = datetime.today()
+            today_str = today.strftime("%Y-%m-%d")
+            for i,w in enumerate(weeks):
+                # if i == len(weeks) - 1:
+                #     for d in range(1, 8):
+                #         labels.append(w[f'date_{d}'])
+                #         data.append(w[f'price_{d}'])
+                # else:
+                if today_str==w[f'date_{get_model}']:
+                    labels.append(w[f'date_{get_model}'])
+                    data.append(w[f'price_{get_model}'])
+                    if i<len(weeks)-1:
+                        # print(f'i={i} week={len(weeks)}')
+                        # print(weeks[-1][f'date_{get_model}'])
+                        labels.append(weeks[-1][f'date_{get_model}'])
+                        data.append(weeks[-1][f'price_{get_model}'])
+                        break
+                    else:
+                        break
+                labels.append(w[f'date_{get_model}'])
+                data.append(w[f'price_{get_model}'])
             chart_result = {'labels': labels, 'data': data}
-            if use_cache:
-                cache.set(cache_key, chart_result, timeout=CACHE_TIMEOUT)
+            cache.set(cache_key, chart_result, timeout=CACHE_TIMEOUT)
             return JsonResponse(chart_result, safe=False)
         result = []
         for i, w in enumerate(weeks):
             if i == len(weeks) - 1:
+            #     result.append({
+            #         'date_1': w['date_1'],
+            #         'date_2': w['date_2'],
+            #         'date_3': w['date_3'],
+            #         'date_4': w['date_4'],
+            #         'date_5': w['date_5'],
+            #         'date_6': w['date_6'],
+            #         'date_7': w['date_7'],
+            #         'price_1': w['price_1'],
+            #         'price_2': w['price_2'],
+            #         'price_3': w['price_3'],
+            #         'price_4': w['price_4'],
+            #         'price_5': w['price_5'],
+            #         'price_6': w['price_6'],
+            #         'price_7': w['price_7'],
+            #     })
+            # else:
                 result.append({
-                    'date_1': w['date_1'],
-                    'date_2': w['date_2'],
-                    'date_3': w['date_3'],
-                    'date_4': w['date_4'],
-                    'date_5': w['date_5'],
-                    'date_6': w['date_6'],
-                    'date_7': w['date_7'],
-                    'price_1': w['price_1'],
-                    'price_2': w['price_2'],
-                    'price_3': w['price_3'],
-                    'price_4': w['price_4'],
-                    'price_5': w['price_5'],
-                    'price_6': w['price_6'],
-                    'price_7': w['price_7'],
-                })
-            else:
-                result.append({
-                    'date_1': w['date_1'],
-                    'price_1': w['price_1']
+                    'date': w[f'date_{get_model}'],
+                    'price': w[f'price_{get_model}']
                 })
         if use_cache:
             cache.set(cache_key, result, timeout=CACHE_TIMEOUT)
