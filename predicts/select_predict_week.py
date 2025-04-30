@@ -32,7 +32,7 @@ def get_select_predict_week(request):
             return JsonResponse({'error': 'Invalid date format, should be DD-MM-YYYY'}, status=400)
 
         # ค้นหา record ที่มี date ตรงกับที่ส่งมา
-        week_data_predict = Week.objects.filter(date=date_obj).values()
+        week_data_predict = Week.objects.filter(date_1=date_obj).values()
         week_data_actual = []
         for i in range(1,8,1):
             target_date = week_data_predict[0][f'date_{i}']
@@ -92,7 +92,7 @@ def get_predict_date(request):
             if cached_data:
                 return JsonResponse(cached_data, safe=False)
         # ค้นหา record ที่มี date ตรงกับที่ส่งมา
-        week_data_predict = Week.objects.all().values('date')
+        week_data_predict = Week.objects.all().values('date_1')
 
         if not week_data_predict:
             return JsonResponse({'error': 'No Predict data found for the given date'}, status=404)
@@ -141,7 +141,7 @@ def set_cache_select_predict(request):
         week_data_actual = []
 
         # เอาวันที่ของ predict มาแปลงเป็น string dd-mm-yy
-        buff_date = predict['date']
+        buff_date = predict['date_1']
         buff_date = datetime.strptime(buff_date, '%Y-%m-%d').date()
         buff_date = buff_date.strftime('%d-%m-%Y')
 
