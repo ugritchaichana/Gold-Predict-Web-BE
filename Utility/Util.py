@@ -2,7 +2,7 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from finnomenaGold.views import get_gold_data
 from currency.views import get_currency_data
-from predicts.select_predict_week import set_cache_select_predict
+from predicts.select_predict_week import set_cache_select_predict,get_predict_date
 import requests
 from django.http import HttpRequest, QueryDict
 from datetime import datetime
@@ -24,6 +24,10 @@ def set_cache(request):
             for index_frame in range(len(gold_query_frame)):
                 to_request.GET=QueryDict(f'frame={gold_query_frame[index_frame]}&cache=True&max=100&display=chart')
                 get_currency_data(to_request)
+            to_request = HttpRequest    
+            to_request.method='GET'
+            to_request.GET=QueryDict(f'cache=false')
+            get_predict_date(to_request)
             to_request = HttpRequest    
             to_request.method='GET'
             to_request.GET=QueryDict(f'display=chart')

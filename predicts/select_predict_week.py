@@ -92,12 +92,13 @@ def get_predict_date(request):
             if cached_data:
                 return JsonResponse(cached_data, safe=False)
         # ค้นหา record ที่มี date ตรงกับที่ส่งมา
-        week_data_predict = Week.objects.all().values('date_1')
+        week_data_raw = Week.objects.all().values('date_1')
 
-        if not week_data_predict:
+        if not week_data_raw:
             return JsonResponse({'error': 'No Predict data found for the given date'}, status=404)
-        cache.set(cache_key,list(week_data_predict) , timeout=CACHE_TIMEOUT)
-        return JsonResponse(list(week_data_predict), safe=False)
+        week_data_predict = [{'date': item['date_1']} for item in week_data_raw]
+        cache.set(cache_key,week_data_predict , timeout=CACHE_TIMEOUT)
+        return JsonResponse(week_data_predict, safe=False)
     
     return JsonResponse({'error': 'GET method required'}, status=405)
 
