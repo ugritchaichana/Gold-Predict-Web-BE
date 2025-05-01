@@ -3,7 +3,7 @@ from .models import Week
 from django.core.cache import cache
 import json
 from datetime import datetime, timedelta
-
+from django.utils import timezone
 CACHE_TIMEOUT = 3600
 
 def get_week(request):
@@ -18,10 +18,11 @@ def get_week(request):
             cached_data = cache.get(cache_key)
             if cached_data:
                 return JsonResponse(cached_data, safe=False)
-        weeks = list(Week.objects.all().values('date_1', 'date_2', 'date_3', 'date_4', 'date_5', 'date_6', 'date_7','price_1', 'price_2', 'price_3', 'price_4', 'price_5', 'price_6', 'price_7'))
+        weeks = list(Week.objects.all().values('date_1', 'date_2', 'date_3', 'date_4', 'date_5', 'date_6', 'date_7','price_1', 'price_2', 'price_3', 'price_4', 'price_5', 'price_6', 'price_7','created_at'))
         if display == 'chart':
             labels = []
             data = []
+            created_at=[]
             today = datetime.today()
             today_str = today.strftime("%Y-%m-%d")
             for i,w in enumerate(weeks):
@@ -33,17 +34,21 @@ def get_week(request):
                 if today_str==w[f'date_{get_model}']:
                     labels.append(w[f'date_{get_model}'])
                     data.append(w[f'price_{get_model}'])
+                    created_at.append(timezone.localtime(w['created_at']))
                     if i<len(weeks)-1:
                         # print(f'i={i} week={len(weeks)}')
                         # print(weeks[-1][f'date_{get_model}'])
                         labels.append(weeks[-1][f'date_{get_model}'])
                         data.append(weeks[-1][f'price_{get_model}'])
+                        created_at.append(timezone.localtime(weeks[-1]['created_at']))
                         break
                     else:
                         break
                 labels.append(w[f'date_{get_model}'])
                 data.append(w[f'price_{get_model}'])
-            chart_result = {'labels': labels, 'data': data}
+                # print(w)
+                created_at.append(timezone.localtime(w['created_at']))
+            chart_result = {'labels': labels, 'data': data,'created_at':created_at}
             cache.set(cache_key, chart_result, timeout=CACHE_TIMEOUT)
             return JsonResponse(chart_result, safe=False)
         result = []
