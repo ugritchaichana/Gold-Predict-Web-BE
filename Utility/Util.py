@@ -20,8 +20,12 @@ def set_cache(request):
                 get_gold_data(to_request)
                 to_request.GET=QueryDict(f'db_choice={i}&frame=1m&display=chart')
                 get_gold_data(to_request)
-                to_request.GET=QueryDict(f'db_choice={i}&frame=1y&display=chart&max=100')
-                get_gold_data(to_request)
+                if i == 0:
+                    to_request.GET=QueryDict(f'db_choice={i}&frame=1y&display=chart&max=100')
+                    get_gold_data(to_request)
+                else:
+                    to_request.GET=QueryDict(f'db_choice={i}&frame=1y&display=chart&max=50')
+                    get_gold_data(to_request)
             to_request.GET=QueryDict(f'frame=1y&cache=True&display=chart&max=50')
             get_currency_data(to_request)
             to_request.GET=QueryDict(f'frame=1m&cache=True&display=chart')
