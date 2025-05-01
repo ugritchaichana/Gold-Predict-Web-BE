@@ -8,25 +8,30 @@ import requests
 from django.http import HttpRequest, QueryDict
 from datetime import datetime
 import json
-gold_query_choice=[0,1]
-gold_query_frame=['7d',
-                  '1m',
-                  '1y',
-                  'all']
 def set_cache(request):
     if request.method=='GET':
         try:
             to_request = HttpRequest    
             to_request.method='GET'
-            for index_choice in range(len(gold_query_choice)):
-                for index_frame in range(len(gold_query_frame)):        
-                    to_request.GET=QueryDict(f'db_choice={gold_query_choice[index_choice]}&max=100&frame={gold_query_frame[index_frame]}&cache=True')
-                    get_gold_data(to_request)
-                    to_request.GET=QueryDict(f'db_choice={gold_query_choice[index_choice]}&max=100&frame={gold_query_frame[index_frame]}&cache=True&display=chart')
-                    get_gold_data(to_request)
-            for index_frame in range(len(gold_query_frame)):
-                to_request.GET=QueryDict(f'frame={gold_query_frame[index_frame]}&cache=True&max=100&display=chart')
-                get_currency_data(to_request)
+            for i in range(1)       :
+                to_request.GET=QueryDict(f'db_choice={i}&frame=1m&display=chart')
+                get_gold_data(to_request)
+                to_request.GET=QueryDict(f'db_choice={i}&frame=all&display=chart&max=100')
+                get_gold_data(to_request)
+                to_request.GET=QueryDict(f'db_choice={i}&frame=7d&display=chart')
+                get_gold_data(to_request)
+                to_request.GET=QueryDict(f'db_choice={i}&frame=1m&display=chart')
+                get_gold_data(to_request)
+                to_request.GET=QueryDict(f'db_choice={i}&frame=1y&display=chart&max=100')
+                get_gold_data(to_request)
+            to_request.GET=QueryDict(f'frame=1y&cache=True&display=chart&max=50')
+            get_currency_data(to_request)
+            to_request.GET=QueryDict(f'frame=1m&cache=True&display=chart')
+            get_currency_data(to_request)
+            to_request.GET=QueryDict(f'frame=all&cache=True&display=chart&max=50')
+            get_currency_data(to_request)
+            to_request.GET=QueryDict(f'frame=7d&cache=True&display=char')
+            get_currency_data(to_request)
             to_request = HttpRequest    
             to_request.method='GET'
             for i in range(1,8):
