@@ -6,7 +6,7 @@ SCRIPT_PATH="/home/toonasboothas/Gold-Predict-Web-BE/Call set cache/call_api.py"
 LOG_PATH="/home/toonasboothas/Gold-Predict-Web-BE/Call set cache/log.txt"
 
 # สร้าง cron expression
-CRON_JOB="0 */2 * * * $PYTHON_PATH $SCRIPT_PATH >> $LOG_PATH 2>&1"
+CRON_JOB="5 */2 * * * $PYTHON_PATH $SCRIPT_PATH >> $LOG_PATH 2>&1"
 
 # ตรวจสอบว่ามี cron นี้อยู่แล้วหรือยัง
 (crontab -l 2>/dev/null | grep -F "$SCRIPT_PATH") > /dev/null
