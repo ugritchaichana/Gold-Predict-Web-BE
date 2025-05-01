@@ -13,7 +13,7 @@ def set_cache(request):
         try:
             to_request = HttpRequest    
             to_request.method='GET'
-            for i in range(0,1):
+            for i in range(0,2):
                 to_request.GET=QueryDict(f'db_choice={i}&frame=all&display=chart&max=100')
                 get_gold_data(to_request)
                 to_request.GET=QueryDict(f'db_choice={i}&frame=7d&display=chart')
