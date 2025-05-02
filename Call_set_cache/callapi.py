@@ -9,12 +9,12 @@ def call_api():
         data = response.json()
 
         # ตัวอย่าง: บันทึกข้อมูลและเวลาไว้ในไฟล์
-        with open("/home/toonasboothas/Gold-Predict-Web-BE/Call set cache/api_log.txt", "a") as f:
+        with open("/home/toonasboothas/Gold-Predict-Web-BE/Call_set_cache/api_log.txt", "a") as f:
             f.write(f"[{datetime.datetime.now()}] Response:\n")
             f.write(str(data) + "\n\n")
 
     except requests.RequestException as e:
-        with open("/home/toonasboothas/Gold-Predict-Web-BE/Call set cache/api_log.txt", "a") as f:
+        with open("/home/toonasboothas/Gold-Predict-Web-BE/Call_set_cache/api_log.txt", "a") as f:
             f.write(f"[{datetime.datetime.now()}] ERROR: {e}\n\n")
 
 if __name__ == "__main__":
