@@ -2,8 +2,9 @@ from django.http import JsonResponse
 from .models import Week
 from django.core.cache import cache
 import json
-from datetime import datetime, timedelta
+from datetime import datetime 
 from django.utils import timezone
+from finnomenaGold.models import Gold_TH
 CACHE_TIMEOUT = 3600
 
 def get_week(request):
@@ -18,13 +19,15 @@ def get_week(request):
             cached_data = cache.get(cache_key)
             if cached_data:
                 return JsonResponse(cached_data, safe=False)
+        last_date = Gold_TH.objects.order_by('-id').values('date').first()
+        print(last_date['date'])
+        last_date =datetime.strptime(last_date['date'],'%d-%m-%y')
         weeks = list(Week.objects.all().values('date_1', 'date_2', 'date_3', 'date_4', 'date_5', 'date_6', 'date_7','price_1', 'price_2', 'price_3', 'price_4', 'price_5', 'price_6', 'price_7','created_at'))
         if display == 'chart':
             labels = []
             data = []
             created_at=[]
-            today = datetime.today()
-            today_str = today.strftime("%Y-%m-%d")
+            today_str = last_date.strftime("%Y-%m-%d")
             for i,w in enumerate(weeks):
                 # if i == len(weeks) - 1:
                 #     for d in range(1, 8):
