@@ -629,10 +629,10 @@ def get_gold_data(request):
                 result =[{
                         "Bar Buy":line['price'],
                         "Bar Sell":line['bar_sell_price'],
-                        "Oranment Buy":line['ornament_buy_price'],
+                        "Ornament Buy":line['ornament_buy_price'],
                         "Ornament Sell":line['ornament_sell_price'],
                         "Price Change":line['bar_price_change'],
-                        "time":line['timestamp']
+                        "time":int(line['timestamp']/1000)
                         }
                         for line in data
                         ]
@@ -647,7 +647,7 @@ def get_gold_data(request):
                         "high":line['high_price'],
                         "low":line['low_price'],
                         "close":line['close_price'],
-                        "timestamp":line['timestamp']
+                        "timestamp":int(line['timestamp']/1000)
                         }
                         for line in data
                         ]

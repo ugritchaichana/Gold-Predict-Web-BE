@@ -657,7 +657,7 @@ def get_currency_data(request):
             "high":line['high'],
             "low":line['low'],
             "close":line['price'],
-            "timestamp":datetime.combine(line['date'], datetime.min.time()).timestamp()
+            "timestamp":int(datetime.combine(line['date'], datetime.min.time()).timestamp())
         }
         for line in data
         ]
