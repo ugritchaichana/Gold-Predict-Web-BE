@@ -551,6 +551,8 @@ def get_currency_data(request):
         cached_data = cache.get(cache_key)
         if cached_data:
             try:
+                if display == 'chart2':
+                    return JsonResponse(list(cached_data), safe=False)
                 cached_data = json.loads(cached_data)
                 logger.info(f"Cache hit: Using cached data for key: {cache_key}")
                 
@@ -632,7 +634,6 @@ def get_currency_data(request):
         return JsonResponse({"error": "Invalid 'group_by' parameter. Use 'daily' or 'monthly'."}, status=400)    # Format data for chart if requested
     if display == 'chart':
         chart_data = format_chart_data_usdthb(data)
-        
         if use_cache:
             chart_data_serialized = convert_dates_to_str(chart_data)
             cache.set(cache_key, json.dumps({"chart_data": chart_data_serialized}), timeout=CACHE_TIMEOUT)
@@ -648,7 +649,29 @@ def get_currency_data(request):
                 "end": end_date.strftime('%d-%m-%Y') if end_date else None
             }
         })
-    
+    elif display == 'chart2':
+     try:
+        # chart_data = format_chart_data_usdthb(data)
+        result =[{
+            "open":line['open'],
+            "high":line['high'],
+            "low":line['low'],
+            "close":line['price'],
+            "timestamp":datetime.combine(line['date'], datetime.min.time()).timestamp()
+        }
+        for line in data
+        ]
+        
+        # if use_cache:
+        #     chart_data_serialized = convert_dates_to_str(chart_data)
+        #     cache.set(cache_key, json.dumps({"chart_data": chart_data_serialized}), timeout=CACHE_TIMEOUT)
+        #     logger.info(f"Cached chart data for key: {cache_key}")
+        cache.set(cache_key, result, timeout=CACHE_TIMEOUT)
+        return JsonResponse(list(result), safe=False)
+     except Exception as e:
+         return JsonResponse({
+             "error":str(e)
+         },status=400)
     # For regular data display
     serialized_data = serialize_data(data)
     

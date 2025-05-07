@@ -54,6 +54,43 @@ def get_week(request):
             chart_result = {'labels': labels, 'data': data,'created_at':created_at}
             cache.set(cache_key, chart_result, timeout=CACHE_TIMEOUT)
             return JsonResponse(chart_result, safe=False)
+        if display == 'chart2':
+         try:
+            labels = []
+            data = []
+            today_str = last_date.strftime("%Y-%m-%d")
+            for i,w in enumerate(weeks):
+                # if i == len(weeks) - 1:
+                #     for d in range(1, 8):
+                #         labels.append(w[f'date_{d}'])
+                #         data.append(w[f'price_{d}'])
+                # else:
+                if today_str==w[f'date_{get_model}']:
+                    labels.append(w[f'date_{get_model}'])
+                    data.append(w[f'price_{get_model}'])
+                    if i<len(weeks)-1:
+                        # print(f'i={i} week={len(weeks)}')
+                        # print(weeks[-1][f'date_{get_model}'])
+                        labels.append(weeks[-1][f'date_{get_model}'])
+                        data.append(weeks[-1][f'price_{get_model}'])
+                        break
+                    else:
+                        break
+                labels.append(w[f'date_{get_model}'])
+                data.append(w[f'price_{get_model}'])
+                # print(w)
+            timestamps = [
+                datetime.strptime(date_str, "%Y-%m-%d").timestamp()
+                for date_str in labels
+                ]
+            chart_result = [
+                {'Predict': p, 'time': int(t)}
+                for t, p in zip(timestamps, data)
+            ]
+            cache.set(cache_key, chart_result, timeout=CACHE_TIMEOUT)
+            return JsonResponse(chart_result, safe=False)
+         except Exception as e:
+             return JsonResponse({"error":str(e)})
         result = []
         for i, w in enumerate(weeks):
             if i == len(weeks) - 1:

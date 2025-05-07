@@ -17,18 +17,30 @@ def set_cache(request):
                 if i == 0:
                     to_request.GET=QueryDict(f'db_choice={i}&frame=all&display=chart&max=100')
                     get_gold_data(to_request)
+                    to_request.GET=QueryDict(f'db_choice={i}&frame=all&display=chart2&max=100&cache=false')
+                    get_gold_data(to_request)
                 else:
                     to_request.GET=QueryDict(f'db_choice={i}&frame=all&display=chart&max=50')
+                    get_gold_data(to_request)
+                    to_request.GET=QueryDict(f'db_choice={i}&frame=all&display=chart2&max=50&cache=false')
                     get_gold_data(to_request)
                 to_request.GET=QueryDict(f'db_choice={i}&frame=7d&display=chart')
                 get_gold_data(to_request)
                 to_request.GET=QueryDict(f'db_choice={i}&frame=1m&display=chart')
                 get_gold_data(to_request)
+                to_request.GET=QueryDict(f'db_choice={i}&frame=7d&display=chart2&cache=false')
+                get_gold_data(to_request)
+                to_request.GET=QueryDict(f'db_choice={i}&frame=1m&display=chart2&cache=false')
+                get_gold_data(to_request)
                 if i == 0:
                     to_request.GET=QueryDict(f'db_choice={i}&frame=1y&display=chart&max=100')
                     get_gold_data(to_request)
+                    to_request.GET=QueryDict(f'db_choice={i}&frame=1y&display=chart2&max=100&cache=false')
+                    get_gold_data(to_request)
                 else:
                     to_request.GET=QueryDict(f'db_choice={i}&frame=1y&display=chart&max=50')
+                    get_gold_data(to_request)
+                    to_request.GET=QueryDict(f'db_choice={i}&frame=1y&display=chart2&max=50&cache=false')
                     get_gold_data(to_request)
             to_request.GET=QueryDict(f'frame=1y&cache=True&display=chart&max=50')
             get_currency_data(to_request)
@@ -38,10 +50,20 @@ def set_cache(request):
             get_currency_data(to_request)
             to_request.GET=QueryDict(f'frame=7d&cache=True&display=chart')
             get_currency_data(to_request)
+            to_request.GET=QueryDict(f'frame=1y&cache=True&display=chart2&max=50&cache=false')
+            get_currency_data(to_request)
+            to_request.GET=QueryDict(f'frame=1m&cache=True&display=chart2&cache=false')
+            get_currency_data(to_request)
+            to_request.GET=QueryDict(f'frame=all&cache=True&display=chart2&max=50&cache=false')
+            get_currency_data(to_request)
+            to_request.GET=QueryDict(f'frame=7d&cache=True&display=chart2&cache=false')
+            get_currency_data(to_request)
             to_request = HttpRequest    
             to_request.method='GET'
             for i in range(1,8):
                 to_request.GET=QueryDict(f'cache=false&display=chart&model={i}')
+                get_week(to_request)
+                to_request.GET=QueryDict(f'cache=false&display=chart2&model={i}')
                 get_week(to_request)
             to_request = HttpRequest    
             to_request.method='GET'

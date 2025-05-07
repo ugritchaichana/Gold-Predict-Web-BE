@@ -507,7 +507,8 @@ def get_gold_data(request):
                             "end": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f %z')
                         }
                     })
-                
+                elif display == 'chart2':
+                    return JsonResponse(list(cached_data),safe=False)
                 return JsonResponse({
                     "cache": [{"status": "used cache", "database": "redis"}],
                     "count": len(cached_data),
@@ -622,10 +623,38 @@ def get_gold_data(request):
                     "end": datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f %z')
                 }
             })
-        
-        if use_cache:        cache.set(cache_key, data, timeout=CACHE_TIMEOUT)  # Cache using standard timeout
-        logging.debug(f"Cache set for key: {cache_key}")
-
+        elif display == 'chart2':
+            if db_choice == '0':  # Gold_TH
+             try:
+                result =[{
+                        "Bar Buy":line['price'],
+                        "Bar Sell":line['bar_sell_price'],
+                        "Oranment Buy":line['ornament_buy_price'],
+                        "Ornament Sell":line['ornament_sell_price'],
+                        "Price Change":line['bar_price_change'],
+                        "time":line['timestamp']
+                        }
+                        for line in data
+                        ]
+                cache.set(cache_key, result, timeout=CACHE_TIMEOUT)
+                return JsonResponse(list(result), safe=False)
+             except Exception as e:
+                 return JsonResponse({"error":str(e)})
+            elif db_choice == '1':  # Gold_US
+             try: 
+                result =[{
+                        "open":line['price'],
+                        "high":line['high_price'],
+                        "low":line['low_price'],
+                        "close":line['close_price'],
+                        "timestamp":line['timestamp']
+                        }
+                        for line in data
+                        ]
+                cache.set(cache_key, result, timeout=CACHE_TIMEOUT)
+                return JsonResponse(list(result), safe=False)
+             except Exception as e:
+                 return JsonResponse({"error":str(e)})
         return JsonResponse({
             "cache": [{"status": "no used cache", "database": "postgresql"}],
             "count": len(data),
