@@ -626,18 +626,30 @@ def get_gold_data(request):
         elif display == 'chart2':
             if db_choice == '0':  # Gold_TH
              try:
-                result =[{
-                        "Bar Buy":line['price'],
-                        "Bar Sell":line['bar_sell_price'],
-                        "Ornament Buy":line['ornament_buy_price'],
-                        "Ornament Sell":line['ornament_sell_price'],
-                        "Price Change":line['bar_price_change'],
-                        "time":int(line['timestamp']/1000)
-                        }
+                result = {
+                    "barBuyData": [
+                        {"time": int(line['timestamp'] / 1000), "value": float(line['price'])}
                         for line in data
-                        ]
+                    ],
+                    "barSellData": [
+                        {"time": int(line['timestamp'] / 1000), "value": float(line['bar_sell_price'])}
+                        for line in data
+                    ],
+                    "ornamentBuyData": [
+                        {"time": int(line['timestamp'] / 1000), "value": float(line['ornament_buy_price'])}
+                        for line in data
+                    ],
+                    "ornamentSellData": [
+                        {"time": int(line['timestamp'] / 1000), "value": float(line['ornament_sell_price'])}
+                        for line in data
+                    ],
+                    "priceChangeData": [
+                        {"time": int(line['timestamp'] / 1000), "value": float(line['bar_price_change'])}
+                        for line in data
+                    ]
+                }
                 cache.set(cache_key, result, timeout=CACHE_TIMEOUT)
-                return JsonResponse(list(result), safe=False)
+                return JsonResponse(result, safe=False)
              except Exception as e:
                  return JsonResponse({"error":str(e)})
             elif db_choice == '1':  # Gold_US
