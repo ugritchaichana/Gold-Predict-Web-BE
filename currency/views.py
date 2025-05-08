@@ -552,7 +552,7 @@ def get_currency_data(request):
         if cached_data:
             try:
                 if display == 'chart2':
-                    return JsonResponse(list(cached_data), safe=False)
+                    return JsonResponse(cached_data, safe=False)
                 cached_data = json.loads(cached_data)
                 logger.info(f"Cache hit: Using cached data for key: {cache_key}")
                 
@@ -652,22 +652,31 @@ def get_currency_data(request):
     elif display == 'chart2':
      try:
         # chart_data = format_chart_data_usdthb(data)
-        result =[{
-            "open":line['open'],
-            "high":line['high'],
-            "low":line['low'],
-            "close":line['price'],
-            "timestamp":int(datetime.combine(line['date'], datetime.min.time()).timestamp())
-        }
-        for line in data
-        ]
+        result = {
+                    "open": [
+                        {"time": int(datetime.combine(line['date'], datetime.min.time()).timestamp()), "value": float(line['open'])}
+                        for line in data
+                    ],
+                    "high": [
+                        {"time": int(datetime.combine(line['date'], datetime.min.time()).timestamp()), "value": float(line['high'])}
+                        for line in data
+                    ],
+                    "low": [
+                        {"time": int(datetime.combine(line['date'], datetime.min.time()).timestamp()), "value": float(line['low'])}
+                        for line in data
+                    ],
+                    "close": [
+                        {"time": int(datetime.combine(line['date'], datetime.min.time()).timestamp()), "value": float(line['price'])}
+                        for line in data
+                    ]
+                }
         
         # if use_cache:
         #     chart_data_serialized = convert_dates_to_str(chart_data)
         #     cache.set(cache_key, json.dumps({"chart_data": chart_data_serialized}), timeout=CACHE_TIMEOUT)
         #     logger.info(f"Cached chart data for key: {cache_key}")
         cache.set(cache_key, result, timeout=CACHE_TIMEOUT)
-        return JsonResponse(list(result), safe=False)
+        return JsonResponse(result, safe=False)
      except Exception as e:
          return JsonResponse({
              "error":str(e)

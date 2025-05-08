@@ -508,7 +508,7 @@ def get_gold_data(request):
                         }
                     })
                 elif display == 'chart2':
-                    return JsonResponse(list(cached_data),safe=False)
+                    return JsonResponse(cached_data,safe=False)
                 return JsonResponse({
                     "cache": [{"status": "used cache", "database": "redis"}],
                     "count": len(cached_data),
@@ -654,17 +654,26 @@ def get_gold_data(request):
                  return JsonResponse({"error":str(e)})
             elif db_choice == '1':  # Gold_US
              try: 
-                result =[{
-                        "open":line['price'],
-                        "high":line['high_price'],
-                        "low":line['low_price'],
-                        "close":line['close_price'],
-                        "timestamp":int(line['timestamp']/1000)
-                        }
+                result = {
+                    "open": [
+                        {"time": int(line['timestamp'] / 1000), "value": float(line['price'])}
                         for line in data
-                        ]
+                    ],
+                    "high": [
+                        {"time": int(line['timestamp'] / 1000), "value": float(line['high_price'])}
+                        for line in data
+                    ],
+                    "low": [
+                        {"time": int(line['timestamp'] / 1000), "value": float(line['low_price'])}
+                        for line in data
+                    ],
+                    "close": [
+                        {"time": int(line['timestamp'] / 1000), "value": float(line['close_price'])}
+                        for line in data
+                    ]
+                }
                 cache.set(cache_key, result, timeout=CACHE_TIMEOUT)
-                return JsonResponse(list(result), safe=False)
+                return JsonResponse(result, safe=False)
              except Exception as e:
                  return JsonResponse({"error":str(e)})
         return JsonResponse({

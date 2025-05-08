@@ -84,7 +84,7 @@ def get_week(request):
                 for date_str in labels
                 ]
             chart_result = [
-                {'Predict': p, 'time': int(t)}
+                {'time': int(t), 'value': float(f"{p:.2f}")}
                 for t, p in zip(timestamps, data)
             ]
             cache.set(cache_key, chart_result, timeout=CACHE_TIMEOUT)
