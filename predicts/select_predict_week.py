@@ -101,7 +101,18 @@ def get_predict_date(request):
         return JsonResponse(week_data_predict, safe=False)
     
     return JsonResponse({'error': 'GET method required'}, status=405)
+def get_predict_last_date(request):
+    if request.method == 'GET':
+        use_cache = request.GET.get('cache', 'true').lower() == 'true'
+        cache_key = f"get_predict_last_date"
+        if use_cache:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                return JsonResponse({'time': cached_data},safe=False)
+        latest_date = Week.objects.values_list('timestamp', flat=True).order_by('-timestamp').first()
 
+        cache.set(cache_key,latest_date,timeout=CACHE_TIMEOUT)
+        return JsonResponse({'time': latest_date},safe=False)
 def set_cache_select_predict(request):
     if request.method != 'GET':
         return JsonResponse({'error': 'GET method required'}, status=405)
