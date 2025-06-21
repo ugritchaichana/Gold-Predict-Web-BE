@@ -1,39 +1,57 @@
 from decouple import config
 import os
-from google.oauth2 import service_account
 from pathlib import Path
 import logging
 
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
+
+try:
+    from google.oauth2 import service_account
+except ImportError:
+    service_account = None
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# GCS Configuration
-GCS_BUCKET_NAME = config('GCS_BUCKET_NAME')
-SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, config('GCS_SERVICE_ACCOUNT_KEY'))
-GCP_PROJECT_ID = config('GCP_PROJECT_ID')
+# Environment detection
+IS_RENDER = config('RENDER', default=False, cast=bool)
 
-GS_CREDENTIALS = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
+# GCS Configuration (only for non-Render environments)
+if not IS_RENDER and service_account:
+    try:
+        GCS_BUCKET_NAME = config('GCS_BUCKET_NAME')
+        SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, config('GCS_SERVICE_ACCOUNT_KEY'))
+        GCP_PROJECT_ID = config('GCP_PROJECT_ID')
+        
+        if os.path.exists(SERVICE_ACCOUNT_FILE):
+            GS_CREDENTIALS = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
+    except Exception as e:
+        print(f"GCS configuration error: {e}")
+        GCS_BUCKET_NAME = None
+        SERVICE_ACCOUNT_FILE = None
+        GCP_PROJECT_ID = None
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = False
-# DEBUG = True
-# DEBUG = config('DEBUG', default=False, cast=bool)
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-key-change-in-production')
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-# อนุญาตให้ทุก host สามารถเข้าถึงได้
-ALLOWED_HOSTS = ['*']
+# Host configuration
+ALLOWED_HOSTS = ['*']  # Allow all hosts for simplicity in Render
 
-# HTTPS settings for Cloud Load Balancer
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-# เปลี่ยนเป็น False ในสภาพแวดล้อมการพัฒนา หรือใช้เงื่อนไขตามตัวแปร DEBUG
-SECURE_SSL_REDIRECT = False  # Redirect all HTTP requests to HTTPS
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+# HTTPS settings (only for non-Render environments)
+if not IS_RENDER:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = False  # Redirect all HTTP requests to HTTPS
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Application definition
 INSTALLED_APPS = [
@@ -52,21 +70,58 @@ INSTALLED_APPS = [
     'Utility',
 ]
 
-if os.environ.get('IS_DOCKER_ENV') == 'true':
-    REDIS_HOST = 'redis'
-else:
-    REDIS_HOST = '127.0.0.1'
-
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        # 'LOCATION': 'redis://127.0.0.1:6379/1',
-        "LOCATION": f"redis://{REDIS_HOST}:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+# Redis configuration for different environments
+if IS_RENDER:
+    # Use external Redis service (Upstash) for Render
+    REDIS_URL = config('REDIS_URL', default=None)
+    if REDIS_URL:
+        CACHES = {
+            "default": {
+                "BACKEND": "django_redis.cache.RedisCache",
+                "LOCATION": REDIS_URL,
+                "OPTIONS": {
+                    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                    "CONNECTION_POOL_KWARGS": {
+                        "ssl_cert_reqs": None,
+                        "ssl_check_hostname": False,
+                    }
+                }
+            }
+        }
+    else:
+        # Fallback to locmem cache (faster than database cache)
+        CACHES = {
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "unique-snowflake",
+                "OPTIONS": {
+                    "MAX_ENTRIES": 1000,
+                    "CULL_FREQUENCY": 3,
+                }
+            }
+        }
+elif os.environ.get('IS_DOCKER_ENV') == 'true':
+    REDIS_HOST = 'redis://redis:6379'
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"{REDIS_HOST}/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
         }
     }
-}
+else:
+    REDIS_HOST = 'redis://127.0.0.1:6379'
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"{REDIS_HOST}/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
+    }
 
 # Logging Configuration
 LOGGING = {
@@ -138,6 +193,7 @@ CORS_ALLOW_CREDENTIALS = True
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # ต้องอยู่ตำแหน่งแรก
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # สำหรับ static files บน Render
     # 'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
@@ -170,23 +226,32 @@ WSGI_APPLICATION = 'Backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT', cast=int),
+if IS_RENDER and dj_database_url:
+    # Use PostgreSQL from Render with environment variable
+    DATABASES = {
+        'default': dj_database_url.parse(config('DATABASE_URL'))
     }
-}
+else:
+    # Use custom PostgreSQL configuration
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST'),
+            'PORT': config('DB_PORT', cast=int),
+        }
+    }
 
-# GCS Configuration
-GCS_BUCKET_NAME = config('GCS_BUCKET_NAME')
-SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, config('GCS_SERVICE_ACCOUNT_KEY'))
-
-# Load credentials
-credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
+# GCS Configuration (only for non-Render environments)
+if not IS_RENDER and service_account and 'GCS_BUCKET_NAME' in locals():
+    try:
+        # Load credentials if file exists
+        if SERVICE_ACCOUNT_FILE and os.path.exists(SERVICE_ACCOUNT_FILE):
+            credentials = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE)
+    except Exception as e:
+        print(f"GCS credentials loading error: {e}")
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -221,7 +286,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Additional static files directories
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+] if os.path.exists(os.path.join(BASE_DIR, 'static')) else []
+
+# WhiteNoise configuration for static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

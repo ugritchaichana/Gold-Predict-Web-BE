@@ -7,22 +7,24 @@ services:
     volumes:
       - .:/app
     ports:
-      - "127.0.0.1:8000:8000"
+      - "8000:8000"  # เปลี่ยนจาก 127.0.0.1:8000:8000 เป็น 8000:8000
     environment:
-      - DEBUG=0
+      - DEBUG=true
+      - RENDER=false
       - DJANGO_SETTINGS_MODULE=Backend.settings
       - IS_DOCKER_ENV=true
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis://redis:6379
     depends_on:
       - redis
+    env_file:
+      - .env
 
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
-      # - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
 
 volumes:
-  redis_data: 
+  redis_data:
