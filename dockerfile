@@ -39,9 +39,9 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Health check
+# Health check - ใช้ endpoint ที่มีอยู่ในโปรเจ็ค
 HEALTHCHECK --interval=30s --timeout=30s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/admin/login/ || exit 1
+    CMD curl -f http://localhost:8000/health/ || exit 1
 
 # Command to run the application
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

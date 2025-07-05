@@ -43,7 +43,7 @@ services:
         max-file: "3"      # เก็บไฟล์ log สูงสุด 3 ไฟล์
         compress: "true"   # บีบอัด log files เก่า
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
       interval: 30s
       timeout: 10s
       retries: 3
