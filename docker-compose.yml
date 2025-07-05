@@ -7,16 +7,28 @@ services:
     volumes:
       - .:/app
     ports:
-      - "8000:8000"  # เปลี่ยนจาก 127.0.0.1:8000:8000 เป็น 8000:8000
+      - "8000:8000"
     environment:
-      - DEBUG=true
+      - DEBUG=${DEBUG:-true}
       - RENDER=false
       - DJANGO_SETTINGS_MODULE=Backend.settings
       - IS_DOCKER_ENV=true
       - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - DB_HOST=postgresql
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY}
+      - GCS_SERVICE_ACCOUNT_KEY=${GCS_SERVICE_ACCOUNT_KEY}
+      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
     depends_on:
-      - redis
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       - .env
 
@@ -27,5 +39,25 @@ services:
     volumes:
       - redis_data:/data
 
+  postgresql:
+    image: postgres:17
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
 volumes:
   redis_data:
+  postgres_data:
