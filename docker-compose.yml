@@ -1,11 +1,15 @@
-version: '3.8'
+# Docker Compose v2.27.1 compatible
+# สำหรับ Ubuntu 24.04 LTS และ Docker Engine 26.1.4
 
 services:
   app:
-    build: .
+    build: 
+      context: .
+      dockerfile: dockerfile
     command: bash -c "python manage.py migrate && exec python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
+      - ./logs:/app/logs
     ports:
       - "8000:8000"
     environment:
@@ -21,6 +25,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - SECRET_KEY=${SECRET_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - GCS_SERVICE_ACCOUNT_KEY=${GCS_SERVICE_ACCOUNT_KEY}
       - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
       - GCP_PROJECT_ID=${GCP_PROJECT_ID}
@@ -31,25 +36,53 @@ services:
         condition: service_started
     env_file:
       - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"    # แต่ละไฟล์ log ไม่เกิน 10MB
+        max-file: "3"      # เก็บไฟล์ log สูงสุด 3 ไฟล์
+        compress: "true"   # บีบอัด log files เก่า
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
 
   redis:
-    image: redis:latest
+    image: redis:7.2.5-alpine  # เวอร์ชั่นเสถียร LTS
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"  # bind เฉพาะ localhost เพื่อความปลอดภัย
     volumes:
       - redis_data:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"     # แต่ละไฟล์ log ไม่เกิน 5MB
+        max-file: "2"      # เก็บไฟล์ log สูงสุด 2 ไฟล์
+        compress: "true"   # บีบอัด log files เก่า
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
 
   postgresql:
-    image: postgres:17
+    image: postgres:17.1-alpine  # เวอร์ชั่นเสถียรและเบา
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"  # bind เฉพาะ localhost เพื่อความปลอดภัย
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres_init:/docker-entrypoint-initdb.d  # สำหรับ init scripts
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 30s
@@ -57,6 +90,12 @@ services:
       retries: 3
       start_period: 30s
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"     # แต่ละไฟล์ log ไม่เกิน 5MB
+        max-file: "2"      # เก็บไฟล์ log สูงสุด 2 ไฟล์
+        compress: "true"   # บีบอัด log files เก่า
 
 volumes:
   redis_data:
