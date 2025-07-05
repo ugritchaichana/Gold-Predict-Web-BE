@@ -293,14 +293,10 @@ def update_daily_usdthb(request):
         
         target_date_str = target_date.strftime('%Y-%m-%d')
         formatted_date_str = target_date.strftime('%d-%m-%y')  # Format as dd-mm-yy
-        logger.info(f"Extracted date from API: {target_date_str}, formatted as: {formatted_date_str}")        # Check if we already have data for the target date
-        existing_record = USDTHB.objects.filter(date=target_date).first()
+        logger.info(f"Extracted date from API: {target_date_str}, formatted as: {formatted_date_str}")
         
-        # For scheduled tasks, set auto parameter to true to update data automatically
-        auto_update = request.GET.get('auto', 'false').lower() == 'true'
-        if auto_update:
-            update_existing = True
-            logger.info(f"Auto update mode enabled, will update existing records if found")
+        # Check if we already have data for the target date
+        existing_record = USDTHB.objects.filter(date=target_date).first()
             
         if existing_record and not update_existing:
             logger.info(f"Data for {target_date_str} already exists in database")
