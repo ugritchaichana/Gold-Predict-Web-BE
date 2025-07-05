@@ -101,11 +101,13 @@ if IS_RENDER:
             }
         }
 elif os.environ.get('IS_DOCKER_ENV') == 'true':
-    REDIS_HOST = 'redis://redis:6379'
+    REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
+    REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
+    REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}"
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": f"{REDIS_HOST}/1",
+            "LOCATION": f"{REDIS_URL}/1",
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
             }

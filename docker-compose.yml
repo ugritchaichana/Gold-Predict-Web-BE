@@ -13,7 +13,8 @@ services:
       - RENDER=false
       - DJANGO_SETTINGS_MODULE=Backend.settings
       - IS_DOCKER_ENV=true
-      - REDIS_HOST=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - redis
     env_file:
