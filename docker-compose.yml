@@ -51,18 +51,18 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7.2.5-alpine  # เวอร์ชั่นเสถียร LTS
+    image: redis:7.2.5-alpine
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
-      - "127.0.0.1:6379:6379"  # bind เฉพาะ localhost เพื่อความปลอดภัย
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     logging:
       driver: "json-file"
       options:
-        max-size: "5m"     # แต่ละไฟล์ log ไม่เกิน 5MB
-        max-file: "2"      # เก็บไฟล์ log สูงสุด 2 ไฟล์
-        compress: "true"   # บีบอัด log files เก่า
+        max-size: "5m"   
+        max-file: "2"     
+        compress: "true"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 30s
